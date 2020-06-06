@@ -41,7 +41,7 @@ summary(vi_mco)
 stargazer::stargazer(vi_mco)
 
 #2. Instrumentos, ¿Qué condiciones deben cumplir para ser válidos?
-#Relevancia
+
 cor(x1,z1) #0.5908596
 cor(x1,z2) #0.8198656
 cor(x1,z3) #0.4272298
@@ -51,25 +51,63 @@ cor(x1,z5) #0.407697
 #Gráficos
 #z1
 ggplot(Datos_instrum, aes_(x = z1,y = x1))+ geom_point()+
-      geom_smooth(method = "lm")
+      geom_smooth(method = "lm")+ xlab("z1")+ylab("x1")+
+  theme (text = element_text(size=8)) + 
+  ggtitle ("Correlación z1,x1")
 #z2
 ggplot(Datos_instrum, aes_(x = z2,y = x1))+ geom_point()+
-  geom_smooth(method = "lm")
+  geom_smooth(method = "lm")+ xlab("z2")+ylab("x1")+
+  theme (text = element_text(size=8)) + 
+  ggtitle ("Correlación z2,x1")
 #z3
 ggplot(Datos_instrum, aes_(x = z3,y = x1))+ geom_point()+
-  geom_smooth(method = "lm")
+  geom_smooth(method = "lm")+ xlab("z3")+ylab("x1")+
+  theme (text = element_text(size=8)) + 
+  ggtitle ("Correlación z3,x1")
 #z4 nube
 ggplot(Datos_instrum, aes_(x = z4,y = x1))+ geom_point()+
-  geom_smooth(method = "lm")
+  geom_smooth(method = "lm")+ xlab("z4")+ylab("x1")+
+  theme (text = element_text(size=8)) + 
+  ggtitle ("Correlación z4,x1")
 #z5
 ggplot(Datos_instrum, aes_(x = z5,y = x1))+ geom_point()+
-  geom_smooth(method = "lm")
+  geom_smooth(method = "lm")+ xlab("z5")+ylab("x1")+
+  theme (text = element_text(size=8)) + 
+  ggtitle ("Correlación z5,x1")
 
+relevancia<-lm(x1~z1+z2+z3+z4+z5, data=Datos_instrum)
+summary(relevancia)
 
+relevancia1<-lm(x1~z1+z2+z3+z5, data=Datos_instrum); summary(relevancia1)
+relevancia2<-lm(x1~z1+z2+z3+z4, data=Datos_instrum);summary(relevancia2)
+relevancia3<-lm(x1~z2+z3, data=Datos_instrum);summary(relevancia3)
+relevancia4<-lm(x1~z2, data=Datos_instrum);summary(relevancia4)
+
+car::linear.hypothesis(z1=z2,relevancia1)
+
+cor(z1,z2)
 #exogeneidad
 # Estadístico f>10 en 1etapa
 
+Etapa1 <-lm(x1~x2+z1+z2+z3+z5, data=Datos_instrum); summary(Etapa1)
+Etapa1.1<- lm(x1~x2+z1+z3,data = Datos_instrum);summary(Etapa1.1)
+Etapa1.1<- lm(x1~x2+z1+z2+z3,data = Datos_instrum);summary(Etapa1.1)
+Etapa1.3 <-lm(x1~x2+z1+z2+z3+z4+z5, data=Datos_instrum); summary(Etapa1.3)
+
+
 #3. Regresion por VI asumiendo x2 exogena
+VI_1=ivreg(y~x1+x2|x2+z1+z2+z3+z4+z5, data = Datos_instrum);summary(VI_1,diagnostics = TRUE)
+VI_2=ivreg(y~x1+x2|x2+z1+z2+z3+z5, data = Datos_instrum);summary(VI_2,diagnostics = TRUE)
+VI_3=ivreg(y~x1+x2|x2+z2, data = Datos_instrum);summary(VI_3,diagnostics = TRUE)
+VI_4=ivreg(y~x1+x2|x2+z1, data = Datos_instrum);summary(VI_4,diagnostics = TRUE)
+
+
+stargazer(VI_1, vi_mco, type = "text")
+#son significativs z1 y z2 por aparte 
+
+stargazer(VI_1,VI_2,VI_3, VI_4,type = "text")
+
+
 #4. asuma x2 endógena. Suponga exogeneidad del instrumento y estime
 #5.Compare las estimaciones
 #6. escoja el mejor modelos. haga la regresión robusta y compare
