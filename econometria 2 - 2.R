@@ -1,4 +1,11 @@
 #Econometría 2-2####
+#Variable instrumental####
+Datos_instrum<-readr::read_csv('VI_grupo25.csv')
+summary(Datos_instrum)
+#MCO
+vi_mco<-lm(y ~ x1 + x2, data = Datos_instrum)
+summary(vi_mco)
+stargazer::stargazer(vi_mco)
 #Variable binaria####
 Datos_binaria<-readr::read_csv('binar_grupo25.csv')
 attach(Datos_binaria)
