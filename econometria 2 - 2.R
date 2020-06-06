@@ -109,6 +109,8 @@ stargazer(VI_1,VI_2,VI_3, VI_4,type = "text")
 
 
 #4. asuma x2 endógena. Suponga exogeneidad del instrumento y estime
+Reg.auxX2<-lm(x2~z1+z2+z3+z4+z5)
+summary(Reg.auxX2)
 #5.Compare las estimaciones
 #6. escoja el mejor modelos. haga la regresión robusta y compare
   #R.VI.Robust = iv_robust(log(wage) ~ educ| fatheduc , data=data.VI);summary(R.VI.Robust)
