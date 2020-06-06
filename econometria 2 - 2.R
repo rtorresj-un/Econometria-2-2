@@ -22,12 +22,18 @@ David Orozco
 
 library(AER);library(foreign); library(stargazer); 
 library(arm);library(lmtest);library(estimatr)  
-
+library(tidyverse); library(broom);library(stargazer);library(wooldridge)
 
 #Variable Instrumental ####  
 
-Datos_instrum<-readr::read_csv('VI_grupo25.csv')
+Datos_instrum<-read.csv(file.choose())
 summary(Datos_instrum)
+attach(Datos_instrum)
+
+#Sobre la base 
+plot(x1,y)
+plot(x2,y)
+
 
 #1. Modelo por MCO
 vi_mco<-lm(y ~ x1 + x2, data = Datos_instrum)
@@ -35,11 +41,39 @@ summary(vi_mco)
 stargazer::stargazer(vi_mco)
 
 #2. Instrumentos, ¿Qué condiciones deben cumplir para ser válidos?
+#Relevancia
+cor(x1,z1) #0.5908596
+cor(x1,z2) #0.8198656
+cor(x1,z3) #0.4272298
+cor(x1,z4) #-0.01204702
+cor(x1,z5) #0.407697
+
+#Gráficos
+#z1
+ggplot(Datos_instrum, aes_(x = z1,y = x1))+ geom_point()+
+      geom_smooth(method = "lm")
+#z2
+ggplot(Datos_instrum, aes_(x = z2,y = x1))+ geom_point()+
+  geom_smooth(method = "lm")
+#z3
+ggplot(Datos_instrum, aes_(x = z3,y = x1))+ geom_point()+
+  geom_smooth(method = "lm")
+#z4 nube
+ggplot(Datos_instrum, aes_(x = z4,y = x1))+ geom_point()+
+  geom_smooth(method = "lm")
+#z5
+ggplot(Datos_instrum, aes_(x = z5,y = x1))+ geom_point()+
+  geom_smooth(method = "lm")
+
+
+#exogeneidad
+# Estadístico f>10 en 1etapa
+
 #3. Regresion por VI asumiendo x2 exogena
 #4. asuma x2 endógena. Suponga exogeneidad del instrumento y estime
 #5.Compare las estimaciones
 #6. escoja el mejor modelos. haga la regresión robusta y compare
-
+  #R.VI.Robust = iv_robust(log(wage) ~ educ| fatheduc , data=data.VI);summary(R.VI.Robust)
 
 #Variable binaria####
 Datos_binaria<-readr::read_csv('binar_grupo25.csv')
