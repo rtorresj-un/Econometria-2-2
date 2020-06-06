@@ -1,11 +1,46 @@
-#Econometría 2-2####
-#Variable instrumental####
+#--------------------------
+Universidad Nacional de Colombia 
+Econometría 2
+Taller 2
+Variable instrumental y binaria
+Grupo 25
+
+integrantes:
+  Juanita Cortes
+Raul Torres
+David Orozco
+#---------------------------
+
+# install.packages("AER") #Applied Econometrics with R for Instrumental Variables
+# install.packages("foreing") #Para cargar datos con formato Stata
+# install.packages("stargazer") #Para una presentaci?n m?s est?tica de los resultados
+# install.packages("estimatr") #Para hacer MC2E con errores robustos
+# install.packages("arm") #An?lisis de datos utilizando regresiones
+# installl.packages("lmtest")
+
+#Cargamos los paquetes. 
+
+library(AER);library(foreign); library(stargazer); 
+library(arm);library(lmtest);library(estimatr)  
+
+
+#Variable Instrumental ####  
+
 Datos_instrum<-readr::read_csv('VI_grupo25.csv')
 summary(Datos_instrum)
-#MCO
+
+#1. Modelo por MCO
 vi_mco<-lm(y ~ x1 + x2, data = Datos_instrum)
 summary(vi_mco)
 stargazer::stargazer(vi_mco)
+
+#2. Instrumentos, ¿Qué condiciones deben cumplir para ser válidos?
+#3. Regresion por VI asumiendo x2 exogena
+#4. asuma x2 endógena. Suponga exogeneidad del instrumento y estime
+#5.Compare las estimaciones
+#6. escoja el mejor modelos. haga la regresión robusta y compare
+
+
 #Variable binaria####
 Datos_binaria<-readr::read_csv('binar_grupo25.csv')
 attach(Datos_binaria)
