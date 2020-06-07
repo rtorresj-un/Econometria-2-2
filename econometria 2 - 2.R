@@ -41,7 +41,7 @@ summary(vi_mco)
 stargazer::stargazer(vi_mco)
 
 #2. Instrumentos, ¿Qué condiciones deben cumplir para ser válidos?####
-
+## Relevancia ####
 cor(x1,z1) #0.5908596
 cor(x1,z2) #0.8198656
 cor(x1,z3) #0.4272298
@@ -77,16 +77,19 @@ ggplot(Datos_instrum, aes_(x = z5,y = x1))+ geom_point()+
 
 #De lo anterior concluimos que z4 no es relevante para x1
 
+## significancia conjunta 1 etapa ####
+
 # Estadístico f>10 en 1etapa
 Etapa1 <-lm(x1~x2+z1+z2+z3+z5, data=Datos_instrum); summary(Etapa1)
-Etapa1.1<- lm(x1~x2+z1+z3,data = Datos_instrum);summary(Etapa1.1)
+Etapa1.1<- lm(x1~x2+z1+z2+z5,data = Datos_instrum);summary(Etapa1.1)
 Etapa1.2<- lm(x1~x2+z1+z2+z3,data = Datos_instrum);summary(Etapa1.2)
 
+stargazer(Etapa1,Etapa1.1,Etapa1.2)
 
 # Prueba de significancia de un conjunto de parámetros para las anteriores etapas
-view(linearHypothesis(Etapa1,c("z1=0","z2=0","z3=0","z5=0"))) #510.9902
-view(linearHypothesis(Etapa1.1,c("z1=0","z3=0")))
-view(linearHypothesis(Etapa1.2,c("z1=0","z2=0","z3=0")))
+view(linearHypothesis(Etapa1,c("z1=0","z2=0","z3=0","z5=0"))) #f= 510.9902
+view(linearHypothesis(Etapa1.1,c("z1=0","z2=0","z5=0"))) # f= 678.5912
+view(linearHypothesis(Etapa1.2,c("z1=0","z2=0","z3=0"))) # f= 	682.0047
 
 #Al hacer la prueba de significancia conjunta, z1,z2,z3,z5 son conjuntamente diferentes de 0 
 
@@ -94,17 +97,18 @@ view(linearHypothesis(Etapa1.2,c("z1=0","z2=0","z3=0")))
 #3. Regresion por VI asumiendo x2 exogena ####
 
 # z4 no es relevante
-VI_1=ivreg(y~x1+x2|x2+z1+z2+z3+z4+z5, data = Datos_instrum);summary(VI_1,diagnostics = TRUE)
+VI_z4=ivreg(y~x1+x2|x2+z1+z2+z3+z4+z5, data = Datos_instrum);summary(VI_z4,diagnostics = TRUE)
 
 # modelo apropiado
-VI_2=ivreg(y~x1+x2|x2+z1+z2+z3+z5, data = Datos_instrum);summary(VI_2,diagnostics = TRUE)
+VI_1=ivreg(y~x1+x2|x2+z1+z2+z3+z5, data = Datos_instrum);summary(VI_1,diagnostics = TRUE)
 
 #sobre identificado
-VI_3=ivreg(y~x1+x2|x2+z2+z3+z1, data = Datos_instrum);summary(VI_3,diagnostics = TRUE)
+VI_2=ivreg(y~x1+x2|x2+z1+z2+z3, data = Datos_instrum);summary(VI_2,diagnostics = TRUE)
 
 # Modelo apropiado
-VI_4=ivreg(y~x1+x2|x2+z1+z2+z5, data = Datos_instrum);summary(VI_4,diagnostics = TRUE)
+VI_3=ivreg(y~x1+x2|x2+z1+z2+z5, data = Datos_instrum);summary(VI_3,diagnostics = TRUE)
 
+stargazer(VI_1,VI_2,VI_3)
 
 #4. asuma x2 endógena. Suponga exogeneidad del instrumento y estime ####
 cor(x2,z1) #-0.02959023
@@ -143,6 +147,8 @@ summary(VI_Robust3_x1,diagnostics = TRUE)
 
 VI_Robust_x2 = iv_robust(y ~ x1+x2| x1+z1+z2+z3+z5 , data = Datos_instrum, diagnostics=TRUE)
 summary(VI_Robust_x2,diagnostics = TRUE)
+
+
 
 #Variable binaria####
 Datos_binaria<-readr::read_csv('binar_grupo25.csv')
