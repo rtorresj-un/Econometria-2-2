@@ -75,6 +75,7 @@ ggplot(Datos_instrum, aes_(x = z5,y = x1))+ geom_point()+
   theme (text = element_text(size=8)) + 
   ggtitle ("Correlación z5,x1")
 
+<<<<<<< HEAD
 #De lo anterior concluimos que z4 no es relevante para x1
 
 # Estadístico f>10 en 1etapa
@@ -89,12 +90,23 @@ view(linearHypothesis(Etapa1.1,c("z1=0","z3=0")))
 view(linearHypothesis(Etapa1.2,c("z1=0","z2=0","z3=0")))
 
 #Al hacer la prueba de significancia conjunta, z1,z2,z3,z5 son conjuntamente diferentes de 0 
+=======
+# Estadístico f>10 en 1etapa
+Etapa1.3 <-lm(x1~x2+z1+z2+z3+z4+z5, data=Datos_instrum); summary(Etapa1.3)
+Etapa1 <-lm(x1~x2+z1+z2+z3+z5, data=Datos_instrum); summary(Etapa1)
+Etapa1.1<- lm(x1~x2+z1+z3,data = Datos_instrum);summary(Etapa1.1)
+Etapa1.1<- lm(x1~x2+z1+z2+z3,data = Datos_instrum);summary(Etapa1.1)
+
+
+# Falta la prueba de significancia conjunta para escoger cuales instrumentos son válidos
+>>>>>>> 72d56404ab8aab3a4ef7b84f96d4043ab70efa92
 
 #3. Regresion por VI asumiendo x2 exogena
 
 # z4 no es relevante
 VI_1=ivreg(y~x1+x2|x2+z1+z2+z3+z4+z5, data = Datos_instrum);summary(VI_1,diagnostics = TRUE)
 
+<<<<<<< HEAD
 # modelo apropiado
 VI_2=ivreg(y~x1+x2|x2+z1+z2+z3+z5, data = Datos_instrum);summary(VI_2,diagnostics = TRUE)
 
@@ -119,6 +131,14 @@ VI_x2=ivreg(y~x1+x2|x1+z4, data = Datos_instrum);summary(VI_x2,diagnostics = TRU
 # wu-Hausman, inidca que x2 no es endógena, resulta mejor estimar por mco
 # No es necesario el test de sargan pues sólo se usa un instrumento
 
+=======
+#La regresión se escoge dependiento de la significancia conjunta de la primera etapa
+
+
+#4. asuma x2 endógena. Suponga exogeneidad del instrumento y estime
+Reg.auxX2<-lm(x2~z1+z2+z3+z4+z5)
+summary(Reg.auxX2)
+>>>>>>> 72d56404ab8aab3a4ef7b84f96d4043ab70efa92
 #5.Compare las estimaciones
 
 #6. escoja el mejor modelos. haga la regresión robusta y compare
