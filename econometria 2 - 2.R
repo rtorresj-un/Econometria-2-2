@@ -75,26 +75,52 @@ ggplot(Datos_instrum, aes_(x = z5,y = x1))+ geom_point()+
   theme (text = element_text(size=8)) + 
   ggtitle ("Correlación z5,x1")
 
+#De lo anterior concluimos que z4 no es relevante para x1
+
 # Estadístico f>10 en 1etapa
-Etapa1.3 <-lm(x1~x2+z1+z2+z3+z4+z5, data=Datos_instrum); summary(Etapa1.3)
 Etapa1 <-lm(x1~x2+z1+z2+z3+z5, data=Datos_instrum); summary(Etapa1)
 Etapa1.1<- lm(x1~x2+z1+z3,data = Datos_instrum);summary(Etapa1.1)
-Etapa1.1<- lm(x1~x2+z1+z2+z3,data = Datos_instrum);summary(Etapa1.1)
+Etapa1.2<- lm(x1~x2+z1+z2+z3,data = Datos_instrum);summary(Etapa1.2)
 
 
-# Falta la prueba de significancia conjunta para escoger cuales instrumentos son válidos
+# Prueba de significancia de un conjunto de parámetros para las anteriores etapas
+view(linearHypothesis(Etapa1,c("z1=0","z2=0","z3=0","z5=0"))) #510.9902
+view(linearHypothesis(Etapa1.1,c("z1=0","z3=0")))
+view(linearHypothesis(Etapa1.2,c("z1=0","z2=0","z3=0")))
+
+#Al hacer la prueba de significancia conjunta, z1,z2,z3,z5 son conjuntamente diferentes de 0 
 
 #3. Regresion por VI asumiendo x2 exogena
-VI_1=ivreg(y~x1+x2|x2+z1+z2+z3+z4+z5, data = Datos_instrum);summary(VI_1,diagnostics = TRUE)
-VI_2=ivreg(y~x1+x2|x2+z1+z2+z3+z5, data = Datos_instrum);summary(VI_2,diagnostics = TRUE)
-VI_3=ivreg(y~x1+x2|x2+z2, data = Datos_instrum);summary(VI_3,diagnostics = TRUE)
-VI_4=ivreg(y~x1+x2|x2+z1, data = Datos_instrum);summary(VI_4,diagnostics = TRUE)
 
-#La regresión se escoge dependiento de la significancia conjunta de la primera etapa
+# z4 no es relevante
+VI_1=ivreg(y~x1+x2|x2+z1+z2+z3+z4+z5, data = Datos_instrum);summary(VI_1,diagnostics = TRUE)
+
+# modelo apropiado
+VI_2=ivreg(y~x1+x2|x2+z1+z2+z3+z5, data = Datos_instrum);summary(VI_2,diagnostics = TRUE)
+
+#sobre identificado
+VI_3=ivreg(y~x1+x2|x2+z2+z3+z1, data = Datos_instrum);summary(VI_3,diagnostics = TRUE)
+
+# Modelo apropiado
+VI_4=ivreg(y~x1+x2|x2+z1+z2+z5, data = Datos_instrum);summary(VI_4,diagnostics = TRUE)
 
 
 #4. asuma x2 endógena. Suponga exogeneidad del instrumento y estime
+cor(x2,z1) #-0.02959023
+cor(x2,z2) #-0.04093649
+cor(x2,z3) #-0.0085756
+cor(x2,z4) #0.7129909
+cor(x2,z5) #-0.02333571
+
+#Si x2 es endogena, el único instrumento relevante es z4 
+VI_x2=ivreg(y~x1+x2|x1+z4, data = Datos_instrum);summary(VI_x2,diagnostics = TRUE)
+
+#las pruebas indican que el instrumento es relevante
+# wu-Hausman, inidca que x2 no es endógena, resulta mejor estimar por mco
+# No es necesario el test de sargan pues sólo se usa un instrumento
+
 #5.Compare las estimaciones
+
 #6. escoja el mejor modelos. haga la regresión robusta y compare
   #R.VI.Robust = iv_robust(log(wage) ~ educ| fatheduc , data=data.VI);summary(R.VI.Robust)
 
