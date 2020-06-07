@@ -35,12 +35,12 @@ plot(x1,y)
 plot(x2,y)
 
 
-#1. Modelo por MCO
+#1. Modelo por MCO ####
 vi_mco<-lm(y ~ x1 + x2, data = Datos_instrum)
 summary(vi_mco)
 stargazer::stargazer(vi_mco)
 
-#2. Instrumentos, ¿Qué condiciones deben cumplir para ser válidos?
+#2. Instrumentos, ¿Qué condiciones deben cumplir para ser válidos?####
 
 cor(x1,z1) #0.5908596
 cor(x1,z2) #0.8198656
@@ -91,7 +91,7 @@ view(linearHypothesis(Etapa1.2,c("z1=0","z2=0","z3=0")))
 #Al hacer la prueba de significancia conjunta, z1,z2,z3,z5 son conjuntamente diferentes de 0 
 
 
-#3. Regresion por VI asumiendo x2 exogena
+#3. Regresion por VI asumiendo x2 exogena ####
 
 # z4 no es relevante
 VI_1=ivreg(y~x1+x2|x2+z1+z2+z3+z4+z5, data = Datos_instrum);summary(VI_1,diagnostics = TRUE)
@@ -106,7 +106,7 @@ VI_3=ivreg(y~x1+x2|x2+z2+z3+z1, data = Datos_instrum);summary(VI_3,diagnostics =
 VI_4=ivreg(y~x1+x2|x2+z1+z2+z5, data = Datos_instrum);summary(VI_4,diagnostics = TRUE)
 
 
-#4. asuma x2 endógena. Suponga exogeneidad del instrumento y estime
+#4. asuma x2 endógena. Suponga exogeneidad del instrumento y estime ####
 cor(x2,z1) #-0.02959023
 cor(x2,z2) #-0.04093649
 cor(x2,z3) #-0.0085756
@@ -120,14 +120,29 @@ VI_x2=ivreg(y~x1+x2|x1+z4, data = Datos_instrum);summary(VI_x2,diagnostics = TRU
 # wu-Hausman, inidca que x2 no es endógena, resulta mejor estimar por mco
 # No es necesario el test de sargan pues sólo se usa un instrumento
 
+Etapa1_x2<-lm(x2~x1+z4, data=Datos_instrum); summary(Etapa1_x2)
+linearHypothesis(Etapa1_x2, "z4=0")
 
-#La regresión se escoge dependiento de la significancia conjunta de la primera etapa
+#5.Compare las estimaciones ####
 
+stargazer(vi_mco, VI_2,VI_4,VI_x2,type = "text")
 
-#5.Compare las estimaciones
+#6. escoja el mejor modelos. haga la regresión robusta y compare ####
 
-#6. escoja el mejor modelos. haga la regresión robusta y compare
-  #R.VI.Robust = iv_robust(log(wage) ~ educ| fatheduc , data=data.VI);summary(R.VI.Robust)
+#Modelo sobreidentificado
+VI_Robust_x1 = iv_robust(y ~ x1+x2| x2+z1+z2+z3+z5 , data = Datos_instrum, diagnostics=TRUE)
+summary(VI_Robust_x1,diagnostics = TRUE)
+
+#Buen Modelo al quitar z3
+VI_Robust2_x1 = iv_robust(y ~ x1+x2| x2+z1+z2+z5 , data = Datos_instrum, diagnostics=TRUE)
+summary(VI_Robust2_x1,diagnostics = TRUE)
+
+#Si se quita z5 y se deja z3 sobreestimado
+VI_Robust3_x1 = iv_robust(y ~ x1+x2| x2+z1+z2+z3 , data = Datos_instrum, diagnostics=TRUE)
+summary(VI_Robust3_x1,diagnostics = TRUE)
+
+VI_Robust_x2 = iv_robust(y ~ x1+x2| x1+z1+z2+z3+z5 , data = Datos_instrum, diagnostics=TRUE)
+summary(VI_Robust_x2,diagnostics = TRUE)
 
 #Variable binaria####
 Datos_binaria<-readr::read_csv('binar_grupo25.csv')
