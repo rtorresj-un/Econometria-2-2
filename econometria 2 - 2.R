@@ -128,20 +128,29 @@ linearHypothesis(Etapa1_x2, "z4=0")
 stargazer(vi_mco, VI_2,VI_4,VI_x2,type = "text")
 
 #6. escoja el mejor modelos. haga la regresión robusta y compare ####
+#Homoscedasticidad
+bptest(VI_1)
+bptest(VI_3)
+#Correlación serial
+bgtest(VI_1, order = 4)
+bgtest(VI_3, order = 4)
 
 #Modelo sobreidentificado
-VI_Robust_x1 = iv_robust(y ~ x1+x2| x2+z1+z2+z3+z5 , data = Datos_instrum, diagnostics=TRUE)
-summary(VI_Robust_x1,diagnostics = TRUE)
+VI_Robust_x1 = iv_robust(y ~ x1+x2| x2+z1+z2+z3+z5 , data = Datos_instrum, diagnostics = TRUE)
+summary(VI_Robust_x1)
 
 #Buen Modelo al quitar z3
-VI_Robust2_x1 = iv_robust(y ~ x1+x2| x2+z1+z2+z5 , data = Datos_instrum, diagnostics=TRUE)
-summary(VI_Robust2_x1,diagnostics = TRUE)
+VI_Robust2_x1 = iv_robust(y ~ x1+x2| x2+z1+z2+z5 , data = Datos_instrum, diagnostics = TRUE)
+summary(VI_Robust2_x1)
 
-#Si se quita z5 y se deja z3 sobreestimado
-VI_Robust3_x1 = iv_robust(y ~ x1+x2| x2+z1+z2+z3 , data = Datos_instrum, diagnostics=TRUE)
-summary(VI_Robust3_x1,diagnostics = TRUE)
+library(xtable)
+xtab <- xtable(tidy(summary(VI_Robust2_x1)), digits=c(0,4,4,4,4,4))
+print(xtab, floating=FALSE)
 
+xtab1 <- xtable(tidy(coeftest(VI_Robust_x1)), digits=c(0,4,4,4,4,4))
+print(xtab1, floating=FALSE)
 
+detach(Datos_instrum)
 #Variable binaria####
 Datos_binaria<-readr::read_csv(file.choose())
 attach(Datos_binaria)
@@ -183,7 +192,7 @@ graf.reglineal(dependiente = y,independiente = x1+x2+I(x2^2))
   cbind(APE_mpl, APE_logit, APE_probit)
     
   #Efectos marginales 1, 2, 3 cuantil####
-  APE_mpl_2<-coef(mpl_1)
+  APE_mpl_2<-coef(mpl_1)*quantile(predict(mpl_1), probs = 0.25)
   
   Predlogit_2 <- quantile(dlogis(predict(logit_1)), probs = 0.25)
   APE_logit_2<-Predlogit_2 * coef(logit_1)
@@ -193,7 +202,7 @@ graf.reglineal(dependiente = y,independiente = x1+x2+I(x2^2))
   
   cbind(APE_mpl_2, APE_logit_2, APE_probit_2)
   
-  APE_mpl_3<-coef(mpl_1)
+  APE_mpl_3<-coef(mpl_1)*quantile(predict(mpl_1), probs = 0.50)
   
   Predlogit_3 <- quantile(dlogis(predict(logit_1)), probs = 0.50)
   APE_logit_3<-Predlogit_3 * coef(logit_1)
@@ -203,7 +212,7 @@ graf.reglineal(dependiente = y,independiente = x1+x2+I(x2^2))
   
   cbind(APE_mpl_3, APE_logit_3, APE_probit_3)
   
-  APE_mpl_4<-coef(mpl_1)
+  APE_mpl_4<-coef(mpl_1)*quantile(predict(mpl_1), probs = 0.75)
   
   Predlogit_4 <- quantile(dlogis(predict(logit_1)), probs = 0.75)
   APE_logit_4<-Predlogit_4 * coef(logit_1)
@@ -212,4 +221,5 @@ graf.reglineal(dependiente = y,independiente = x1+x2+I(x2^2))
   APE_probit_4<-Predprobit_4 * coef(probit_1)
   
   cbind(APE_mpl_4, APE_logit_4, APE_probit_4)
+  
   
