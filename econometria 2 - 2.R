@@ -6,7 +6,7 @@ Variable instrumental y binaria
 Grupo 25
 
 integrantes:
-  Juanita Cortes
+Juanita Cortes
 Raul Torres
 David Orozco
 #---------------------------
@@ -21,7 +21,7 @@ David Orozco
 #Cargamos los paquetes. 
 
 library(AER);library(foreign); library(stargazer); 
-library(arm);library(lmtest);library(estimatr)  
+library(arm);library(lmtest);library(estimatr); library(ggplot2)
 library(tidyverse); library(broom);library(stargazer);library(wooldridge)
 
 #Variable Instrumental ####  
@@ -47,34 +47,34 @@ cor(x1,z2) #0.8198656
 cor(x1,z3) #0.4272298
 cor(x1,z4) #-0.01204702
 cor(x1,z5) #0.407697
-
 #Gráficos
 #z1
+gridExtra::grid.arrange(
 ggplot(Datos_instrum, aes_(x = z1,y = x1))+ geom_point()+
       geom_smooth(method = "lm")+ xlab("z1")+ylab("x1")+
   theme (text = element_text(size=8)) + 
-  ggtitle ("Correlación z1,x1")
+  ggtitle ("Correlación z1,x1"),
 #z2
 ggplot(Datos_instrum, aes_(x = z2,y = x1))+ geom_point()+
   geom_smooth(method = "lm")+ xlab("z2")+ylab("x1")+
   theme (text = element_text(size=8)) + 
-  ggtitle ("Correlación z2,x1")
+  ggtitle ("Correlación z2,x1"),
 #z3
 ggplot(Datos_instrum, aes_(x = z3,y = x1))+ geom_point()+
   geom_smooth(method = "lm")+ xlab("z3")+ylab("x1")+
   theme (text = element_text(size=8)) + 
-  ggtitle ("Correlación z3,x1")
+  ggtitle ("Correlación z3,x1"),
 #z4 nube
 ggplot(Datos_instrum, aes_(x = z4,y = x1))+ geom_point()+
   geom_smooth(method = "lm")+ xlab("z4")+ylab("x1")+
   theme (text = element_text(size=8)) + 
-  ggtitle ("Correlación z4,x1")
+  ggtitle ("Correlación z4,x1"),
 #z5
 ggplot(Datos_instrum, aes_(x = z5,y = x1))+ geom_point()+
   geom_smooth(method = "lm")+ xlab("z5")+ylab("x1")+
   theme (text = element_text(size=8)) + 
-  ggtitle ("Correlación z5,x1")
-
+  ggtitle ("Correlación z5,x1"), ncol=2
+)
 #De lo anterior concluimos que z4 no es relevante para x1
 
 ## significancia conjunta 1 etapa ####
@@ -87,9 +87,9 @@ Etapa1.2<- lm(x1~x2+z1+z2+z3,data = Datos_instrum);summary(Etapa1.2)
 stargazer(Etapa1,Etapa1.1,Etapa1.2)
 
 # Prueba de significancia de un conjunto de parámetros para las anteriores etapas
-view(linearHypothesis(Etapa1,c("z1=0","z2=0","z3=0","z5=0"))) #f= 510.9902
-view(linearHypothesis(Etapa1.1,c("z1=0","z2=0","z5=0"))) # f= 678.5912
-view(linearHypothesis(Etapa1.2,c("z1=0","z2=0","z3=0"))) # f= 	682.0047
+linearHypothesis(Etapa1,c("z1=0","z2=0","z3=0","z5=0"))  #f= 510.9902
+linearHypothesis(Etapa1.1,c("z1=0","z2=0","z5=0")) # f= 678.5912
+linearHypothesis(Etapa1.2,c("z1=0","z2=0","z3=0")) # f= 	682.0047
 
 #Al hacer la prueba de significancia conjunta, z1,z2,z3,z5 son conjuntamente diferentes de 0 
 
@@ -151,7 +151,7 @@ summary(VI_Robust_x2,diagnostics = TRUE)
 
 
 #Variable binaria####
-Datos_binaria<-readr::read_csv('binar_grupo25.csv')
+Datos_binaria<-readr::read_csv(file.choose())
 attach(Datos_binaria)
 summary(Datos_binaria)
 plot(y)
