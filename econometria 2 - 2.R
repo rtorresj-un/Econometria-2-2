@@ -96,9 +96,6 @@ linearHypothesis(Etapa1.2,c("z1=0","z2=0","z3=0")) # f= 	682.0047
 
 #3. Regresion por VI asumiendo x2 exogena ####
 
-# z4 no es relevante
-VI_z4=ivreg(y~x1+x2|x2+z1+z2+z3+z4+z5, data = Datos_instrum);summary(VI_z4,diagnostics = TRUE)
-
 # modelo apropiado
 VI_1=ivreg(y~x1+x2|x2+z1+z2+z3+z5, data = Datos_instrum);summary(VI_1,diagnostics = TRUE)
 
