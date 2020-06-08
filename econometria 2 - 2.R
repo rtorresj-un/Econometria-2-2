@@ -222,4 +222,4 @@ graf.reglineal(dependiente = y,independiente = x1+x2+I(x2^2))
   
   cbind(APE_mpl_4, APE_logit_4, APE_probit_4)
   
-  
+  detach(Datos_binaria)
