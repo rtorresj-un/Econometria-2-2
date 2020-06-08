@@ -111,6 +111,8 @@ cor(x2,z3) #-0.0085756
 cor(x2,z4) #0.7129909
 cor(x2,z5) #-0.02333571
 
+stargazer(lm(x2~x1+z1+z2+z3+z4+z5))
+
 #Si x2 es endogena, el único instrumento relevante es z4 
 VI_x2=ivreg(y~x1+x2|x1+z4, data = Datos_instrum);summary(VI_x2,diagnostics = TRUE)
 
@@ -138,10 +140,6 @@ summary(VI_Robust2_x1,diagnostics = TRUE)
 #Si se quita z5 y se deja z3 sobreestimado
 VI_Robust3_x1 = iv_robust(y ~ x1+x2| x2+z1+z2+z3 , data = Datos_instrum, diagnostics=TRUE)
 summary(VI_Robust3_x1,diagnostics = TRUE)
-
-VI_Robust_x2 = iv_robust(y ~ x1+x2| x1+z1+z2+z3+z5 , data = Datos_instrum, diagnostics=TRUE)
-summary(VI_Robust_x2,diagnostics = TRUE)
-
 
 
 #Variable binaria####
