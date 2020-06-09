@@ -17,10 +17,11 @@ David Orozco
 # install.packages("estimatr") #Para hacer MC2E con errores robustos
 # install.packages("arm") #An?lisis de datos utilizando regresiones
 # installl.packages("lmtest")
+# install.packages('margins')
 
 #Cargamos los paquetes. 
 
-library(AER);library(foreign); library(stargazer); 
+library(AER);library(foreign); library(stargazer); library(margins)
 library(arm);library(lmtest);library(estimatr); library(ggplot2)
 library(tidyverse); library(broom);library(stargazer);library(wooldridge)
 
@@ -181,6 +182,12 @@ graf.reglineal(dependiente = y,independiente = x1+x2+I(x2^2))
     ggtitle(label = "Modelo de Regresión Logístico",
             subtitle = paste(substitute(dependiente),"vs",substitute(independiente)))
 #Efectos marginales####
+  #Efecto marginal en la media
+  margins(mpl_1)
+  margins(logit_1)
+  margins(probit_1)
+  
+  #Efecto marginal promedio
   APE_mpl<-coef(mpl_1)
   
   Predlogit_1 <- mean(dlogis(predict(logit_1)))
@@ -222,4 +229,11 @@ graf.reglineal(dependiente = y,independiente = x1+x2+I(x2^2))
   
   cbind(APE_mpl_4, APE_logit_4, APE_probit_4)
   
+#Bondad de ajuste de los modelos####
+  table(Observado = y, Predicho = round(fitted(mpl_1))) 
+  table(Observado = y, Predicho = round(fitted(probit_1)))
+  table(Observado = y, Predicho = round(fitted(logit_1))) 
+
+  
   detach(Datos_binaria)
+  
