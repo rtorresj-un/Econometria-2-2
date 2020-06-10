@@ -174,10 +174,12 @@ summary(probit_1)
 
 stargazer::stargazer(mpl_1,logit_1,probit_1, type = 'text')
 
-graf.reglineal(dependiente = y,independiente = x1+x2+I(x2^2))
-  require(ggplot2)
+plot(x = x1+x2+I(x2^2),y = y,pch=20,main = "Modelo de Regresión Lineal",
+  xlab = substitute(y),ylab = substitute(x1+x2+I(x2^2)))
+  abline(lm(y~x1+x2+I(x2^2)))
+  
   ggplot(data=NULL,aes(x=x1+x2+I(x2^2), y=y)) + geom_point() + 
-    stat_smooth(method=glm, method.args=list(family="binomial"), se=T)+
+    stat_smooth(method=glm, method.args=list(family=binomial (link = "logit")), se=T)+
     ylab(substitute(dependiente))+xlab(substitute(independiente))+
     ggtitle(label = "Modelo de Regresión Logístico",
             subtitle = paste(substitute(dependiente),"vs",substitute(independiente)))
@@ -199,6 +201,8 @@ graf.reglineal(dependiente = y,independiente = x1+x2+I(x2^2))
   cbind(APE_mpl, APE_logit, APE_probit)
     
   #Efectos marginales 1, 2, 3 cuantil####
+  
+  #Cálculo usando cuantiles efecto marginal promedio
   APE_mpl_2<-coef(mpl_1)*quantile(predict(mpl_1), probs = 0.25)
   
   Predlogit_2 <- quantile(dlogis(predict(logit_1)), probs = 0.25)
@@ -229,11 +233,37 @@ graf.reglineal(dependiente = y,independiente = x1+x2+I(x2^2))
   
   cbind(APE_mpl_4, APE_logit_4, APE_probit_4)
   
+  #Cálculo usando cuantiles efecto marginal en la media
+MERq1_mpl<-    margins(mpl_1, at=list(x1=quantile(x1, probs = 0.25), x2=quantile(x2, probs = 0.25)))
+MERq1_logit<-  margins(logit_1, at=list(x1=quantile(x1, probs = 0.25), x2=quantile(x2, probs = 0.25)))
+MERq1_probit<-  margins(probit_1, at=list(x1=quantile(x1, probs = 0.25), x2=quantile(x2, probs = 0.25)))
+
+  rbind(MERq1_mpl, MERq1_logit, MERq1_probit)
+
+MERq2_mpl<-  margins(mpl_1, at=list(x1=quantile(x1, probs = 0.5), x2=quantile(x2, probs = 0.5)))
+MERq2_logit<-  margins(logit_1, at=list(x1=quantile(x1, probs = 0.5), x2=quantile(x2, probs = 0.5)))
+MERq2_probit<-  margins(probit_1, at=list(x1=quantile(x1, probs = 0.5), x2=quantile(x2, probs = 0.5)))
+
+  cbind(MERq2_mpl, MERq2_logit, MERq2_probit)
+
+MERq3_mpl<-  margins(mpl_1, at=list(x1=quantile(x1, probs = 0.75), x2=quantile(x2, probs = 0.75)))
+MERq3_logit<-  margins(logit_1, at=list(x1=quantile(x1, probs = 0.75), x2=quantile(x2, probs = 0.75)))
+MERq3_probit<-  margins(probit_1, at=list(x1=quantile(x1, probs = 0.75), x2=quantile(x2, probs = 0.75)))
+  
+  cbind(MERq3_mpl, MERq3_logit, MERq3_probit)
+  
+#interpretación de efecto marginal mayor que 1
+  ggplot(data=NULL,aes(x=x1+x2+I(x2^2), y=y)) + geom_point() + 
+    stat_smooth(method=glm, method.args=list(family=binomial (link = "logit")), se=T)+
+    geom_abline(slope = 1/3.70239, intercept = 0.7988, colour='red')+
+    ylab(substitute(dependiente))+xlab(substitute(independiente))+
+    ggtitle(label = "Modelo de Regresión Logístico",
+            subtitle = paste(substitute(dependiente),"vs",substitute(independiente)))
+  
 #Bondad de ajuste de los modelos####
   table(Observado = y, Predicho = round(fitted(mpl_1))) 
   table(Observado = y, Predicho = round(fitted(probit_1)))
   table(Observado = y, Predicho = round(fitted(logit_1))) 
 
-  
   detach(Datos_binaria)
   
