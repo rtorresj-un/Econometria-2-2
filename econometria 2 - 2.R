@@ -189,29 +189,38 @@ plot(x = x1+x2+I(x2^2),y = y,pch=20,main = "Modelo de Regresión Lineal",
   margins(logit_1, at=list(x1=mean(x1), x2=mean(x2)))
   margins(probit_1, at=list(x1=mean(x1), x2=mean(x2)))
     
-#Efectos marginales 1, 2, 3 cuantil####
+#Efectos marginales 1, 2, 3 cuartil####
   
   #Cálculo usando cuantiles efecto marginal en la media (marginal effects at representative cases)
-MERq1_mpl<-    margins(mpl_1, at=list(x1=quantile(x1, probs = 0.25), x2=quantile(x2, probs = 0.25)))
-MERq1_logit<-  margins(logit_1, at=list(x1=quantile(x1, probs = 0.25), x2=quantile(x2, probs = 0.25)))
-MERq1_probit<-  margins(probit_1, at=list(x1=quantile(x1, probs = 0.25), x2=quantile(x2, probs = 0.25)))
-
-MERq2_mpl<-  margins(mpl_1, at=list(x1=quantile(x1, probs = 0.5), x2=quantile(x2, probs = 0.5)))
-MERq2_logit<-  margins(logit_1, at=list(x1=quantile(x1, probs = 0.5), x2=quantile(x2, probs = 0.5)))
-MERq2_probit<-  margins(probit_1, at=list(x1=quantile(x1, probs = 0.5), x2=quantile(x2, probs = 0.5)))
-
-MERq3_mpl<-  margins(mpl_1, at=list(x1=quantile(x1, probs = 0.75), x2=quantile(x2, probs = 0.75)))
-MERq3_logit<-  margins(logit_1, at=list(x1=quantile(x1, probs = 0.75), x2=quantile(x2, probs = 0.75)))
-MERq3_probit<-  margins(probit_1, at=list(x1=quantile(x1, probs = 0.75), x2=quantile(x2, probs = 0.75)))
+#1er cuartil
+margins(mpl_1, at=list(x1=quantile(x1, probs = 0.25), x2=quantile(x2, probs = 0.25)))
+margins(logit_1, at=list(x1=quantile(x1, probs = 0.25), x2=quantile(x2, probs = 0.25)))
+margins(probit_1, at=list(x1=quantile(x1, probs = 0.25), x2=quantile(x2, probs = 0.25)))
+#2do cuartil
+margins(mpl_1, at=list(x1=quantile(x1, probs = 0.5), x2=quantile(x2, probs = 0.5)))
+margins(logit_1, at=list(x1=quantile(x1, probs = 0.5), x2=quantile(x2, probs = 0.5)))
+margins(probit_1, at=list(x1=quantile(x1, probs = 0.5), x2=quantile(x2, probs = 0.5)))
+#3er cuartil
+margins(mpl_1, at=list(x1=quantile(x1, probs = 0.75), x2=quantile(x2, probs = 0.75)))
+margins(logit_1, at=list(x1=quantile(x1, probs = 0.75), x2=quantile(x2, probs = 0.75)))
+margins(probit_1, at=list(x1=quantile(x1, probs = 0.75), x2=quantile(x2, probs = 0.75)))
   
 #interpretación de efecto marginal mayor que 1
+gridExtra::grid.arrange(
   ggplot(data=NULL,aes(x=x1+x2+I(x2^2), y=y)) + geom_point() + 
     stat_smooth(method=glm, method.args=list(family=binomial (link = "logit")), se=T)+
-    geom_abline(slope = 1/3.70239, intercept = 0.7988, colour='red')+
-    ylab(substitute(dependiente))+xlab(substitute(independiente))+
+    geom_abline(slope = 1/(3.70239+0.373206), intercept = 0.7988, colour='red')+
+    ylab(substitute(y))+xlab(substitute(x1+x2+I(x2^2)))+
     ggtitle(label = "Modelo de Regresión Logístico",
-            subtitle = paste(substitute(dependiente),"vs",substitute(independiente)))
+            subtitle = paste(substitute(y),"vs",substitute(x1+x2+I(x2^2)))),
   
+  ggplot(data=NULL,aes(x=x1+x2+I(x2^2), y=y)) + geom_point() + 
+    stat_smooth(method=glm, method.args=list(family=binomial (link = "probit")), se=T)+
+    geom_abline(slope = 1/(3.450295+0.352486), intercept = 0.7988, colour='red')+
+    ylab(substitute(y))+xlab(substitute(x1+x2+I(x2^2)))+
+    ggtitle(label = "Modelo de Regresión Normal Estándar",
+            subtitle = paste(substitute(y),"vs",substitute(x1+x2+I(x2^2))))
+)
 #Bondad de ajuste de los modelos####
   #Porcentaje correcto predicho
   table(Observado = y, Predicho = round(fitted(mpl_1))) 
@@ -230,6 +239,9 @@ MERq3_probit<-  margins(probit_1, at=list(x1=quantile(x1, probs = 0.75), x2=quan
   L_o_pro<-logLik(glm(y~1, family=binomial (link = "probit")))
   L_nr_pro<-logLik(probit_1)
   1 - L_nr_pro/L_o_pro
+  
+  summary(logit_1)$aic
+  summary(probit_1)$aic
   
   detach(Datos_binaria)
   
