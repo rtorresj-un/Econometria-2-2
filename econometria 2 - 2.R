@@ -233,7 +233,7 @@ plot(x = x1+x2+I(x2^2),y = y,pch=20,main = "Modelo de Regresión Lineal",
   
   cbind(APE_mpl_4, APE_logit_4, APE_probit_4)
   
-  #Cálculo usando cuantiles efecto marginal en la media
+  #Cálculo usando cuantiles efecto marginal en la media (marginal effects at representative cases)
 MERq1_mpl<-    margins(mpl_1, at=list(x1=quantile(x1, probs = 0.25), x2=quantile(x2, probs = 0.25)))
 MERq1_logit<-  margins(logit_1, at=list(x1=quantile(x1, probs = 0.25), x2=quantile(x2, probs = 0.25)))
 MERq1_probit<-  margins(probit_1, at=list(x1=quantile(x1, probs = 0.25), x2=quantile(x2, probs = 0.25)))
