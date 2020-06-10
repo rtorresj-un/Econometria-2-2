@@ -185,72 +185,24 @@ plot(x = x1+x2+I(x2^2),y = y,pch=20,main = "Modelo de Regresión Lineal",
             subtitle = paste(substitute(dependiente),"vs",substitute(independiente)))
 #Efectos marginales####
   #Efecto marginal en la media
-  margins(mpl_1)
-  margins(logit_1)
-  margins(probit_1)
-  
-  #Efecto marginal promedio
-  APE_mpl<-coef(mpl_1)
-  
-  Predlogit_1 <- mean(dlogis(predict(logit_1)))
-  APE_logit<-Predlogit_1 * coef(logit_1)
-  
-  Predprobit_1 <- mean(dnorm(predict(probit_1)))
-  APE_probit<-Predprobit_1 * coef(probit_1)
-
-  cbind(APE_mpl, APE_logit, APE_probit)
+  margins(mpl_1, at=list(x1=mean(x1), x2=mean(x2)))
+  margins(logit_1, at=list(x1=mean(x1), x2=mean(x2)))
+  margins(probit_1, at=list(x1=mean(x1), x2=mean(x2)))
     
   #Efectos marginales 1, 2, 3 cuantil####
-  
-  #Cálculo usando cuantiles efecto marginal promedio
-  APE_mpl_2<-coef(mpl_1)*quantile(predict(mpl_1), probs = 0.25)
-  
-  Predlogit_2 <- quantile(dlogis(predict(logit_1)), probs = 0.25)
-  APE_logit_2<-Predlogit_2 * coef(logit_1)
-  
-  Predprobit_2 <- quantile(dnorm(predict(probit_1)), probs = 0.25)
-  APE_probit_2<-Predprobit_2 * coef(probit_1)
-  
-  cbind(APE_mpl_2, APE_logit_2, APE_probit_2)
-  
-  APE_mpl_3<-coef(mpl_1)*quantile(predict(mpl_1), probs = 0.50)
-  
-  Predlogit_3 <- quantile(dlogis(predict(logit_1)), probs = 0.50)
-  APE_logit_3<-Predlogit_3 * coef(logit_1)
-  
-  Predprobit_3 <- quantile(dnorm(predict(probit_1)), probs = 0.50)
-  APE_probit_3<-Predprobit_3 * coef(probit_1)
-  
-  cbind(APE_mpl_3, APE_logit_3, APE_probit_3)
-  
-  APE_mpl_4<-coef(mpl_1)*quantile(predict(mpl_1), probs = 0.75)
-  
-  Predlogit_4 <- quantile(dlogis(predict(logit_1)), probs = 0.75)
-  APE_logit_4<-Predlogit_4 * coef(logit_1)
-  
-  Predprobit_4 <- quantile(dnorm(predict(probit_1)), probs = 0.75)
-  APE_probit_4<-Predprobit_4 * coef(probit_1)
-  
-  cbind(APE_mpl_4, APE_logit_4, APE_probit_4)
   
   #Cálculo usando cuantiles efecto marginal en la media (marginal effects at representative cases)
 MERq1_mpl<-    margins(mpl_1, at=list(x1=quantile(x1, probs = 0.25), x2=quantile(x2, probs = 0.25)))
 MERq1_logit<-  margins(logit_1, at=list(x1=quantile(x1, probs = 0.25), x2=quantile(x2, probs = 0.25)))
 MERq1_probit<-  margins(probit_1, at=list(x1=quantile(x1, probs = 0.25), x2=quantile(x2, probs = 0.25)))
 
-  rbind(MERq1_mpl, MERq1_logit, MERq1_probit)
-
 MERq2_mpl<-  margins(mpl_1, at=list(x1=quantile(x1, probs = 0.5), x2=quantile(x2, probs = 0.5)))
 MERq2_logit<-  margins(logit_1, at=list(x1=quantile(x1, probs = 0.5), x2=quantile(x2, probs = 0.5)))
 MERq2_probit<-  margins(probit_1, at=list(x1=quantile(x1, probs = 0.5), x2=quantile(x2, probs = 0.5)))
 
-  cbind(MERq2_mpl, MERq2_logit, MERq2_probit)
-
 MERq3_mpl<-  margins(mpl_1, at=list(x1=quantile(x1, probs = 0.75), x2=quantile(x2, probs = 0.75)))
 MERq3_logit<-  margins(logit_1, at=list(x1=quantile(x1, probs = 0.75), x2=quantile(x2, probs = 0.75)))
 MERq3_probit<-  margins(probit_1, at=list(x1=quantile(x1, probs = 0.75), x2=quantile(x2, probs = 0.75)))
-  
-  cbind(MERq3_mpl, MERq3_logit, MERq3_probit)
   
 #interpretación de efecto marginal mayor que 1
   ggplot(data=NULL,aes(x=x1+x2+I(x2^2), y=y)) + geom_point() + 
@@ -261,9 +213,23 @@ MERq3_probit<-  margins(probit_1, at=list(x1=quantile(x1, probs = 0.75), x2=quan
             subtitle = paste(substitute(dependiente),"vs",substitute(independiente)))
   
 #Bondad de ajuste de los modelos####
+  #Porcentaje correcto predicho
   table(Observado = y, Predicho = round(fitted(mpl_1))) 
-  table(Observado = y, Predicho = round(fitted(probit_1)))
   table(Observado = y, Predicho = round(fitted(logit_1))) 
-
+  table(Observado = y, Predicho = round(fitted(probit_1)))
+  
+  Porcentaje_correcto_0=0.805; Porcentaje_correcto_1=0.957
+  Porcentaje_correcto_general=0.5*Porcentaje_correcto_0+0.5*Porcentaje_correcto_1
+  Porcentaje_correcto_general*100
+  
+  #Pseudo R^2 de McFadden
+  L_o_log<-logLik(glm(y~1, family=binomial (link = "logit")))
+  L_nr_log<-logLik(logit_1)
+  1 - L_nr_log/L_o_log
+  
+  L_o_pro<-logLik(glm(y~1, family=binomial (link = "probit")))
+  L_nr_pro<-logLik(logit_1)
+  1 - L_nr_pro/L_o_pro
+  
   detach(Datos_binaria)
   
