@@ -189,7 +189,7 @@ plot(x = x1+x2+I(x2^2),y = y,pch=20,main = "Modelo de Regresión Lineal",
   margins(logit_1, at=list(x1=mean(x1), x2=mean(x2)))
   margins(probit_1, at=list(x1=mean(x1), x2=mean(x2)))
     
-  #Efectos marginales 1, 2, 3 cuantil####
+#Efectos marginales 1, 2, 3 cuantil####
   
   #Cálculo usando cuantiles efecto marginal en la media (marginal effects at representative cases)
 MERq1_mpl<-    margins(mpl_1, at=list(x1=quantile(x1, probs = 0.25), x2=quantile(x2, probs = 0.25)))
@@ -228,7 +228,7 @@ MERq3_probit<-  margins(probit_1, at=list(x1=quantile(x1, probs = 0.75), x2=quan
   1 - L_nr_log/L_o_log
   
   L_o_pro<-logLik(glm(y~1, family=binomial (link = "probit")))
-  L_nr_pro<-logLik(logit_1)
+  L_nr_pro<-logLik(probit_1)
   1 - L_nr_pro/L_o_pro
   
   detach(Datos_binaria)
