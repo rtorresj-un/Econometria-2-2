@@ -172,7 +172,7 @@ summary(logit_1)
 probit_1<-glm(y ~ 1 + x1 + x2 + I(x2^2), family=binomial (link = "probit"))
 summary(probit_1)
 
-stargazer::stargazer(mpl_1,logit_1,probit_1, type = 'text')
+stargazer(mpl_1,logit_1,probit_1, type = 'text')
 
 plot(x = x1+x2+I(x2^2),y = y,pch=20,main = "Modelo de Regresión Lineal",
   xlab = substitute(y),ylab = substitute(x1+x2+I(x2^2)))
@@ -188,6 +188,12 @@ plot(x = x1+x2+I(x2^2),y = y,pch=20,main = "Modelo de Regresión Lineal",
   margins(mpl_1, at=list(x1=mean(x1), x2=mean(x2)))
   margins(logit_1, at=list(x1=mean(x1), x2=mean(x2)))
   margins(probit_1, at=list(x1=mean(x1), x2=mean(x2)))
+  
+  #Efecto marginal promedio
+  APE_mpl<- coef(mpl_1)
+  APE_logit<- mean(dlogis(predict(logit_1)))*coef(logit_1)
+  APE_probit<- mean(dnorm(predict(probit_1)))*coef(probit_1)
+  cbind(APE_mpl, APE_logit, APE_probit)
     
 #Efectos marginales 1, 2, 3 cuartil####
   
@@ -209,14 +215,14 @@ margins(probit_1, at=list(x1=quantile(x1, probs = 0.75), x2=quantile(x2, probs =
 gridExtra::grid.arrange(
   ggplot(data=NULL,aes(x=x1+x2+I(x2^2), y=y)) + geom_point() + 
     stat_smooth(method=glm, method.args=list(family=binomial (link = "logit")), se=T)+
-    geom_abline(slope = 1/(3.70239+0.373206), intercept = 0.7988, colour='red')+
+    geom_abline(slope = 1/(3.70239+0.373206), intercept = 0.8617, colour='red')+
     ylab(substitute(y))+xlab(substitute(x1+x2+I(x2^2)))+
     ggtitle(label = "Modelo de Regresión Logístico",
             subtitle = paste(substitute(y),"vs",substitute(x1+x2+I(x2^2)))),
   
   ggplot(data=NULL,aes(x=x1+x2+I(x2^2), y=y)) + geom_point() + 
     stat_smooth(method=glm, method.args=list(family=binomial (link = "probit")), se=T)+
-    geom_abline(slope = 1/(3.450295+0.352486), intercept = 0.7988, colour='red')+
+    geom_abline(slope = 1/(3.450295+0.352486), intercept = 0.8617, colour='red')+
     ylab(substitute(y))+xlab(substitute(x1+x2+I(x2^2)))+
     ggtitle(label = "Modelo de Regresión Normal Estándar",
             subtitle = paste(substitute(y),"vs",substitute(x1+x2+I(x2^2))))
