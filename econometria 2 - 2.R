@@ -233,7 +233,7 @@ gridExtra::grid.arrange(
   table(Observado = y, Predicho = round(fitted(logit_1))) 
   table(Observado = y, Predicho = round(fitted(probit_1)))
   
-  Porcentaje_correcto_0=0.805; Porcentaje_correcto_1=0.957
+  Porcentaje_correcto_0=137/(137+33); Porcentaje_correcto_1=795/(35+795)
   Porcentaje_correcto_general=0.5*Porcentaje_correcto_0+0.5*Porcentaje_correcto_1
   Porcentaje_correcto_general*100
   
