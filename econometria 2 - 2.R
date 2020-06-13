@@ -161,8 +161,7 @@ plot(y)
 plot(x1)
 plot(x2)
 plot(I(x2^2))
-boxplot(x2)
-boxplot(I(x2^2))
+boxplot(x1, x2, I(x2^2),names = c('x_1', 'x_2', 'x_2^2'), horizontal = T)
 
 #Modelo de prob lineal ####
 mpl_1<-lm(y ~ 1 + x1 + x2 + I(x2^2))
