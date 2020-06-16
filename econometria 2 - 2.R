@@ -152,6 +152,7 @@ xtab1 <- xtable(tidy(coeftest(VI_Robust_x1)), digits=c(0,4,4,4,4,4))
 print(xtab1, floating=FALSE)
 
 detach(Datos_instrum)
+
 #Variable binaria####
 Datos_binaria<-readr::read_csv(file.choose())
 attach(Datos_binaria)
@@ -160,20 +161,23 @@ plot(y)
 plot(x1)
 plot(x2)
 plot(I(x2^2))
-boxplot(x2)
-boxplot(I(x2^2))
-#Modelo de prob lineal
+boxplot(x1, x2, I(x2^2),names = c('x_1', 'x_2', 'x_2^2'), horizontal = T)
+
+#Modelo de prob lineal ####
 mpl_1<-lm(y ~ 1 + x1 + x2 + I(x2^2))
 summary(mpl_1)
-#Modelo Logit
+
+#Modelo Logit ####
 logit_1<-glm(y ~ 1 + x1 + x2 + I(x2^2), family=binomial (link = "logit"))
 summary(logit_1)
-#Modelo Probit
+
+#Modelo Probit ####
 probit_1<-glm(y ~ 1 + x1 + x2 + I(x2^2), family=binomial (link = "probit"))
 summary(probit_1)
 
 stargazer(mpl_1,logit_1,probit_1, type = 'text')
 
+#Gráficas regresión mpl y logit ####
 plot(x = x1+x2+I(x2^2),y = y,pch=20,main = "Modelo de Regresión Lineal",
   xlab = substitute(y),ylab = substitute(x1+x2+I(x2^2)))
   abline(lm(y~x1+x2+I(x2^2)))
@@ -211,7 +215,7 @@ margins(mpl_1, at=list(x1=quantile(x1, probs = 0.75), x2=quantile(x2, probs = 0.
 margins(logit_1, at=list(x1=quantile(x1, probs = 0.75), x2=quantile(x2, probs = 0.75)))
 margins(probit_1, at=list(x1=quantile(x1, probs = 0.75), x2=quantile(x2, probs = 0.75)))
   
-#interpretación de efecto marginal mayor que 1
+#interpretación de efecto marginal mayor que 1 ####
 gridExtra::grid.arrange(
   ggplot(data=NULL,aes(x=x1+x2+I(x2^2), y=y)) + geom_point() + 
     stat_smooth(method=glm, method.args=list(family=binomial (link = "logit")), se=T)+
@@ -233,7 +237,7 @@ gridExtra::grid.arrange(
   table(Observado = y, Predicho = round(fitted(logit_1))) 
   table(Observado = y, Predicho = round(fitted(probit_1)))
   
-  Porcentaje_correcto_0=0.805; Porcentaje_correcto_1=0.957
+  Porcentaje_correcto_0=137/(137+33); Porcentaje_correcto_1=795/(35+795)
   Porcentaje_correcto_general=0.5*Porcentaje_correcto_0+0.5*Porcentaje_correcto_1
   Porcentaje_correcto_general*100
   
