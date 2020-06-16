@@ -1,4 +1,11 @@
-#Taller 2 - R Avanzado#
+#-----------------------------
+Universidad Nacional de Colombia
+Taller 2 - R Avanzado
+
+Juanita Cortes
+Raúl Torres
+#----------------------------
+
 install.packages("tseries")
 install.packages("urca")
 install.packages("fBasics")
@@ -49,6 +56,7 @@ pptest<-ur.pp(ipc,model=c("trend"), type=c("Z-tau"))
 summary(pptest)
 
 pptest2<-ur.pp(diff(ipc),model=c("constant"), type=c("Z-tau"))
+
 summary(pptest2)
 
 #La prueba Kpss tiene las hip?tesis al reves
@@ -64,7 +72,7 @@ pacf(diff(ipc))
 
 #ELECCI?N DEL MEJOR MODELO (SEG?N AIC) el menor indce es el mejor modelo
 
-dipc=diff(ipc, 2)
+dipc=diff(ipc, 2) 
 
 arima(x = dipc,order = c(1,0,0))
 
@@ -85,13 +93,31 @@ for (i in 0:mar) {
 
 results
 
+#Modelo final ########
 ar_ipc<- arima(x = dipc,order = c(4,0,3))
 coeftest(ar_ipc)
 
+#validación del modelo
+layout(matrix(1:2, ncol = 2, nrow = 1))
 plot(ar_ipc$resid)
+acf(ar_ipc$residuals,ylim=c(-1,1), main = "FAC de Residuales")
+pacf(ar_ipc$residuals,ylim=c(-1,1), main = "FACP de Residuales")
 
 for (i in 1:10) {print( Box.test(resid(ar_ipc), lag=i,  type="Ljung") )}
 
+#Verificacion de residuos, ruido blanco y normalidad
 hist(ar_ipc$residuals)
 tsdiag(ar_ipc)
 normalTest(ar_ipc$resid, method="jb")
+
+#Pronostico ######
+
+install.packages("forecast")
+library(forecast)
+
+pred=forecast(ipc,h=20)
+library(ggplot2)
+autoplot(pred)
+
+#REAL vs AJUSTADO
+ts.plot(ipc,(pred$fitted),col=c("black","red"))
