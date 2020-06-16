@@ -16,8 +16,21 @@ end(ipc)  #Ver cu?ndo finaliza la serie
 frequency(ipc)  #Ver la periodicidad de los datos
 summary(ipc)  #Estad?stica descriptiva
 View(ipc)  #Ver la serie
-cs
-ipc
-acf()
+
+#Graficar la serie temporal
+
+plot(ipc,main="IPC")
+
+#incluir l?nea de tendencia
+abline(lm(ipc~time(ipc)))
+
+(ciclo=cycle(ipc))     #Ver el ciclo de la serie
+boxplot(ipc~ciclo)
+
+
+descompos = stl(ipc,s.window = "periodic")
+plot(descompos)
+
+acf(ipc)
 pacf()
 Box.test(y, lag = 13, type = c ("Ljung-Box"))
