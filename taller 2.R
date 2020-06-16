@@ -1,3 +1,4 @@
+#Taller 2 - R Avanzado#
 install.packages("tseries")
 install.packages("urca")
 install.packages("fBasics")
@@ -8,20 +9,19 @@ library(lmtest)
 library(urca)
 library(fBasics)
 
+#1. Series de tiempo####
+library(readxl)
+IPC <- read_excel(file.choose(), 
+                  col_names = FALSE)
 IPC
 ipc=ts(IPC$...1,start = c(2008,1),frequency = 12)
-class(ipc)  #Ver el tipo de objeto
-start(ipc)  #Ver cu?ndo comienza la serie
-end(ipc)  #Ver cu?ndo finaliza la serie
-frequency(ipc)  #Ver la periodicidad de los datos
-summary(ipc)  #Estad?stica descriptiva
-View(ipc)  #Ver la serie
+summary(ipc)  #Estadística descriptiva
 
 #Graficar la serie temporal
 
 plot(ipc,main="IPC")
 
-#incluir l?nea de tendencia
+#incluir línea de tendencia
 abline(lm(ipc~time(ipc)))
 
 (ciclo=cycle(ipc))     #Ver el ciclo de la serie
