@@ -5,10 +5,6 @@ Taller 2 - R Avanzado
 Juanita Cortes
 Raúl Torres
 #----------------------------
-
-install.packages("tseries")
-install.packages("urca")
-install.packages("fBasics")
 library(tseries)
 library(urca)
 library(stats)
@@ -28,15 +24,8 @@ ipc=ts(IPC$...1,start = c(2008,1),frequency = 12)
 summary(ipc)  #Estadística descriptiva
 
 #Graficar la serie temporal
-
 plot(ipc,main="IPC")
-
-#incluir línea de tendencia
 abline(lm(ipc~time(ipc)))
-
-(ciclo=cycle(ipc))     #Ver el ciclo de la serie
-boxplot(ipc~ciclo)
-
 
 descompos = stl(ipc,s.window = "periodic")
 plot(descompos)
@@ -45,45 +34,39 @@ par(mfrow=c(1,2))
 acf(ipc)
 pacf(ipc)
 Box.test(ipc, lag = 10, type = c ("Ljung-Box")) #Ho: No correlación serial
-
-plot(diff(ipc))
+dev.off()
+plot(diff(ipc, 2))
 
 #Prueba Dickey-Fuller
-adf.test(diff(ipc, 2),alternative = "stationary")
+adf.test(ipc,alternative = "stationary")
 
-ru_1 <- ur.df(diff(ipc, 2), type = "drift", selectlags = c("AIC"))
-summary(ru_1)
+ru_2 <- ur.df(diff(ipc, 2), type = "drift", selectlags = c("AIC"))
+summary(ru_2)
 
 #Prueba Phillip Perron
-pptest<-ur.pp(ipc,model=c("trend"), type=c("Z-tau"))
-summary(pptest)
+pptest1<-ur.pp(ipc,model=c("trend"), type=c("Z-tau"))
+summary(pptest1)
 
-pptest2<-ur.pp(diff(ipc),model=c("constant"), type=c("Z-tau"))
-
+pptest2<-ur.pp(diff(ipc,2),model=c("constant"), type=c("Z-tau"))
 summary(pptest2)
 
-#La prueba Kpss tiene las hip?tesis al reves
-kpss<-ur.kpss(ipc, type=c("tau"))
-summary(kpss)
+#Prueba kpss
+kpss1<-ur.kpss(ipc, type=c("tau"))
+summary(kpss1)
 
-kpss2<-ur.kpss(diff(ipc), type=c("tau"))
+kpss2<-ur.kpss(diff(ipc,2), type=c("tau"))
 summary(kpss2)
 
 par(mfrow=c(1,2))
-acf(diff(ipc))
-pacf(diff(ipc))
+acf(diff(ipc,2))
+pacf(diff(ipc,2))
+dev.off()
 
-#ELECCI?N DEL MEJOR MODELO (SEG?N AIC) el menor indce es el mejor modelo
+#ELECCIÓN DEL MEJOR MODELO - AIC
 
 dipc=diff(ipc, 2) 
 
-arima(x = dipc,order = c(1,0,0))
-
-arima(x = dipc,order = c(2,0,4))
-
-arima(x = dipc,order = c(4,0,3))
-
-# Estimaci?n de modelos
+# Estimación de modelos
 
 mar <- 4
 mma <- 4
@@ -93,33 +76,30 @@ for (i in 0:mar) {
     fitp <- arima(dipc, order = c(i, 0, j), include.mean = TRUE)
     results <- rbind(results,as.numeric(c(i, j, AIC(fitp), BIC(fitp)))) 
   }
-}
+}; results
 
-results
-
-#Modelo final #
+#Modelo final
 ar_ipc<- arima(x = dipc,order = c(4,0,3))
 coeftest(ar_ipc)
 
-#validación del modelo
-
-plot(ar_ipc$resid)
+#Validación del modelo
 par(mfrow=c(1,2))
 acf(ar_ipc$residuals,ylim=c(-1,1), main = "FAC de Residuales")
 pacf(ar_ipc$residuals,ylim=c(-1,1), main = "FACP de Residuales")
+dev.off()
 
 for (i in 1:10) {print( Box.test(resid(ar_ipc), lag=i,  type="Ljung") )}
 
-#Verificacion de residuos, ruido blanco y normalidad.
+#Verificación de residuos, ruido blanco y normalidad.
 hist(ar_ipc$residuals)
 tsdiag(ar_ipc)
 normalTest(ar_ipc$resid, method="jb")
 
-#Pronostico.
+#Pronóstico.
 pred=forecast(ar_ipc,h=12)
 autoplot(pred)
 
-#REAL vs AJUSTADO
+#Real vs. ajustado
 ts.plot(dipc,pred$fitted,col=c("black","red"))
 
 
@@ -144,7 +124,7 @@ summary(probit)
 
 stargazer::stargazer(olsreg,logit,probit,type = "html")
 
-# Efectos marginales del Modelo de Probabilidad Lineal
+# Efectos marginales promedio del Modelo de Probabilidad Lineal
 coef(olsreg)
 
 # Efectos marginales promedio del modelo Logit
@@ -171,8 +151,8 @@ summary(random)
 
 stargazer::stargazer(pool, fixed, random, type='html')
 
-#Test de multiplicadores de Lagrange de Breusch - Pagan
-plmtest(pool,type = c("bp"))  #RHo, se utiliza efectos aleatorios.
+#Test de multiplicadores de Lagrange de Breusch - Pagan; RHo: hay efectos temporales, se utiliza efectos aleatorios.
+plmtest(pool,type = c("bp"))
 
 #Test de Hausman; Ho: diferencia no significativa, mejor efectos aleatorios.
 phtest(fixed, random)
