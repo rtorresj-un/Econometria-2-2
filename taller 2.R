@@ -17,10 +17,10 @@ library(urca)
 library(fBasics)
 library(forecast)
 library(ggplot2)
-
+library(haven)
+library(readxl)
 
 #1. Series de tiempo####
-library(readxl)
 IPC <- read_excel(file.choose(), 
                   col_names = FALSE)
 IPC
@@ -124,8 +124,7 @@ ts.plot(dipc,pred$fitted,col=c("black","red"))
 
 
 #2.Elección binaria ####
-library(readxl)
-seguro <- read_dta("seguro.dta")
+seguro <- read_dta(file.choose())
 attach(seguro)
 summary(seguro)
 X <- cbind(retire, age, hstatusg, hhincome, educyear, married, hisp)
@@ -143,7 +142,7 @@ summary(logit)
 probit<- glm(ins ~ X, family=binomial (link="probit"))
 summary(probit)
 
-stargazer::stargazer(olsreg,logit,probit,type = "text")
+stargazer::stargazer(olsreg,logit,probit,type = "html")
 
 # Efectos marginales del Modelo de Probabilidad Lineal
 coef(olsreg)
@@ -157,3 +156,17 @@ ProbitScalar <- mean(dnorm(predict(probit)))
 ProbitScalar * coef(probit)
 
 #3. Datos panel ####
+Crime <- read_excel(file.choose())
+attach(Crime)              
+
+#Pooled
+pool<- plm(crmrte~ prbarr+prbconv+prbpris+polpc+density+taxpc+west+central+urban, model="pooling", data=Crime)
+summary(pool)
+#Efectos fijos
+fixed<- plm(crmrte~ prbarr+prbconv+prbpris+polpc+density+taxpc+west+central+urban, model="within", data=Crime)
+summary(fixed)
+#Efectos aleatorios
+random<- plm(crmrte~ prbarr+prbconv+prbpris+polpc+density+taxpc+west+central+urban, model="random", data=Crime)
+summary(random)
+
+stargazer::stargazer(pool, fixed, random, type='html')
