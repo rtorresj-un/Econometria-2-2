@@ -121,3 +121,39 @@ autoplot(pred)
 
 #REAL vs AJUSTADO
 ts.plot(dipc,pred$fitted,col=c("black","red"))
+
+
+#2.Elección binaria ####
+library(readxl)
+seguro <- read_dta("seguro.dta")
+attach(seguro)
+summary(seguro)
+X <- cbind(retire, age, hstatusg, hhincome, educyear, married, hisp)
+summary(ins)
+
+# Modelo de Probabilidad Lineal
+olsreg <- lm(ins ~ X)
+summary(olsreg)
+
+# Modelo Logit
+logit<- glm(ins ~ X, family=binomial (link = "logit"))
+summary(logit) 
+
+# Modelo Probit
+probit<- glm(ins ~ X, family=binomial (link="probit"))
+summary(probit)
+
+stargazer::stargazer(olsreg,logit,probit,type = "text")
+
+# Efectos marginales del Modelo de Probabilidad Lineal
+coef(olsreg)
+
+# Efectos marginales promedio del modelo Logit
+LogitScalar <- mean(dlogis(predict(logit)))
+LogitScalar * coef(logit)
+
+# Efectos marginales promedio del modelo Probit
+ProbitScalar <- mean(dnorm(predict(probit)))
+ProbitScalar * coef(probit)
+
+#3. Datos panel ####
