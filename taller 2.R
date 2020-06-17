@@ -15,6 +15,9 @@ library(stats)
 library(lmtest)
 library(urca)
 library(fBasics)
+library(forecast)
+library(ggplot2)
+
 
 #1. Series de tiempo####
 library(readxl)
@@ -78,6 +81,7 @@ arima(x = dipc,order = c(1,0,0))
 
 arima(x = dipc,order = c(2,0,4))
 
+arima(x = dipc,order = c(4,0,3))
 
 # Estimaci?n de modelos
 
@@ -98,8 +102,9 @@ ar_ipc<- arima(x = dipc,order = c(4,0,3))
 coeftest(ar_ipc)
 
 #validación del modelo
-layout(matrix(1:2, ncol = 2, nrow = 1))
+
 plot(ar_ipc$resid)
+par(mfrow=c(1,2))
 acf(ar_ipc$residuals,ylim=c(-1,1), main = "FAC de Residuales")
 pacf(ar_ipc$residuals,ylim=c(-1,1), main = "FACP de Residuales")
 
@@ -111,13 +116,8 @@ tsdiag(ar_ipc)
 normalTest(ar_ipc$resid, method="jb")
 
 #Pronostico ######
-
-install.packages("forecast")
-library(forecast)
-
-pred=forecast(ipc,h=20)
-library(ggplot2)
+pred=forecast(ar_ipc,h=12)
 autoplot(pred)
 
 #REAL vs AJUSTADO
-ts.plot(ipc,(pred$fitted),col=c("black","red"))
+ts.plot(dipc,pred$fitted,col=c("black","red"))
