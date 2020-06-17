@@ -97,7 +97,7 @@ for (i in 0:mar) {
 
 results
 
-#Modelo final ########
+#Modelo final #
 ar_ipc<- arima(x = dipc,order = c(4,0,3))
 coeftest(ar_ipc)
 
@@ -110,12 +110,12 @@ pacf(ar_ipc$residuals,ylim=c(-1,1), main = "FACP de Residuales")
 
 for (i in 1:10) {print( Box.test(resid(ar_ipc), lag=i,  type="Ljung") )}
 
-#Verificacion de residuos, ruido blanco y normalidad
+#Verificacion de residuos, ruido blanco y normalidad.
 hist(ar_ipc$residuals)
 tsdiag(ar_ipc)
 normalTest(ar_ipc$resid, method="jb")
 
-#Pronostico ######
+#Pronostico.
 pred=forecast(ar_ipc,h=12)
 autoplot(pred)
 
@@ -157,7 +157,7 @@ ProbitScalar * coef(probit)
 
 #3. Datos panel ####
 Crime <- read_excel(file.choose())
-attach(Crime)              
+Crime<- pdata.frame(Crime)
 
 #Pooled
 pool<- plm(crmrte~ prbarr+prbconv+prbpris+polpc+density+taxpc+west+central+urban, model="pooling", data=Crime)
@@ -170,3 +170,12 @@ random<- plm(crmrte~ prbarr+prbconv+prbpris+polpc+density+taxpc+west+central+urb
 summary(random)
 
 stargazer::stargazer(pool, fixed, random, type='html')
+
+#Test de multiplicadores de Lagrange de Breusch - Pagan
+plmtest(pool,type = c("bp"))  #RHo, se utiliza efectos aleatorios.
+
+#Test de Hausman; Ho: diferencia no significativa, mejor efectos aleatorios.
+phtest(fixed, random)
+
+
+
