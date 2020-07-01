@@ -1,7 +1,7 @@
 #Taller 3 - Econmetría 2####
 #Raul Torres, Juanita Cortes, David Orozco
 library(readr); library(urca); library(tseries); library(gridExtra); library(ggfortify)
-library(forecast); library(seasonal); library(aTSA)
+library(forecast); library(seasonal); library(aTSA); library(readxl)
 #Primer punto####
 Data_1<-read_delim(file.choose(),";", escape_double = FALSE, trim_ws = TRUE)
 IPC_DE<-ts(data.frame(Data_1)$IPC_DE, frequency = 12, start = 1960)
@@ -104,7 +104,7 @@ arch <-arch.test(arima3, output=TRUE)
 
 fore1<-autoplot(forecast::forecast(arima3, level = c(95), h = 7))+
                               scale_x_continuous(limit = c(2010, 2025))+
-                              scale_y_continuous(limit = c(4.25, 4.75))
+                              scale_y_continuous(limit = c(4.5, 4.7))
 print(fore1)
 
 
