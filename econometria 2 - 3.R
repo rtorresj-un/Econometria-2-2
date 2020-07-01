@@ -45,6 +45,36 @@ grid.arrange(
 )
 # El comportamiento estacional se mantiene en los gráficos de autocorrelación
 
+autoplot(diff(diff(log(IPC_DE)),12))
+grid.arrange(
+  ggAcf(diff(diff(log(IPC_DE)),12),lag.max=30,plot=T,lwd=2,xlab='',main='ACF del IPC'),
+  ggPacf(diff(diff(log(IPC_DE)),12),lag.max=30,plot=T,lwd=2,xlab='',main='PACF del IPC')
+)
+
+plot(stl(diff(log(IPC_DE)), s.window = 'periodic')$time.series[,2])
+
+arima<-auto.arima(log(IPC_DE))
+arima1<-arima(diff(log(IPC_DE)),order=c(1,0,0),seasonal=list(order=c(0,1,1),period=12))
+arima2<-arima(diff(log(IPC_DE)),order=c(0,0,1),seasonal=list(order=c(0,1,1),period=12))
+arima3<-arima(diff(log(IPC_DE)),order=c(0,0,1),seasonal=list(order=c(0,1,3),period=12),include.mean=T)
+arima4<-arima(diff(log(IPC_DE)),order=c(0,0,2),seasonal=list(order=c(0,1,1),period=12))
+
+grid.arrange(
+  ggAcf(residuals(arima3),lag.max=30,plot=T,lwd=2,xlab='',main='ACF del IPC'),
+  ggPacf(residuals(arima3),lag.max=30,plot=T,lwd=2,xlab='',main='PACF del IPC')
+)
+
+ts.plot( diff(log(IPC_DE)),fitted(arima3), col=c('blue', 'red'))
+
+qqnorm(residuals(arima3))
+qqline(residuals(arima3))
+jarque.bera.test(residuals(arima3))
+shapiro.test(residuals(arima3))
+summary(IPC_DE)
+
+
+
+forecast()
 
 #Segundo punto####
 Data_UR<-read.csv(file.choose())
