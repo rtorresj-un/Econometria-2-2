@@ -265,10 +265,32 @@ grid.arrange(
   ggAcf(Diff_pib,lag.max=30,plot=T,lwd=2,xlab='',main='ACF del IPC'),
   ggPacf(Diff_pib,lag.max=30,plot=T,lwd=2,xlab='',main='PACF del IPC')
 )
+# Seleccion de modelo ####
+mar <- 4
+mma <- 4
+results <- c("p","q","AIC","SBC")
+for (i in 0:mar) {
+  for (j in 0:mma)  {
+    fitp <- arima(Diff_pib, order = c(i, 0, j), include.mean = TRUE)
+    results <- rbind(results,as.numeric(c(i, j, AIC(fitp), BIC(fitp)))) 
+  }
+}
 
+results
+#ARIMA (2,1,4) de serie lm
+mod1<-arima(x = Diff_pib,order = c(1,0,1),include.mean = F)
+mod1.1<-arima(x = Diff_pib,order = c(1,0,1),include.mean = TRUE)
+#ARIMA (4,1,2) de serie lm
+mod2<-arima(x = Diff_pib,order = c(2,0,1),include.mean = F)
+mod2.1<-arima(x = Diff_pib,order = c(2,0,1),include.mean = TRUE)
 
+coeftest(mod1)  
+coeftest(mod2.1)  
 
-
+jarqueberaTest(mod1.1$residuals)
+plot(mod1$residuals)
+qqnorm(mod1.1$residuals)
+qqline(mod1.1$residuals)
 #Segundo punto####
 Data_UR<-read.csv(file.choose())
 View(Data_UR)
