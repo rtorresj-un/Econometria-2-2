@@ -473,8 +473,8 @@ interp_urdf(adf.none_x1,level = "5pct")
 
 #----------X2----------####  
 grid.arrange(
-  ggAcf(x2,lag.max=25,plot=T,lwd=2,xlab='',main='ACF de x1'),
-  ggPacf(x2,lag.max=25,plot=T,lwd=2,xlab='',main='PACF de x1')
+  ggAcf(x2,lag.max=25,plot=T,lwd=2,xlab='',main='ACF de x2'),
+  ggPacf(x2,lag.max=25,plot=T,lwd=2,xlab='',main='PACF de x2')
 )
 
 
@@ -506,8 +506,8 @@ interp_urdf(adf.none_x2,level = "5pct")
 
 #----------X3----------####  
 grid.arrange(
-  ggAcf(x3,lag.max=25,plot=T,lwd=2,xlab='',main='ACF de x1'),
-  ggPacf(x3,lag.max=25,plot=T,lwd=2,xlab='',main='PACF de x1')
+  ggAcf(x3,lag.max=25,plot=T,lwd=2,xlab='',main='ACF de x3'),
+  ggPacf(x3,lag.max=25,plot=T,lwd=2,xlab='',main='PACF de x3')
 )
 
 #Como evidenciamos un proceso altamente persistente, es evidente que la serie no es I(0).
