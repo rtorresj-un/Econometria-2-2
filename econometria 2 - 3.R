@@ -729,8 +729,7 @@ ifelse(coint.test(x4, x5, nlag = 1, output = F)["type 1",'EG']<=-3.35,
 # evidencia de cointegracion entre x1-x2 y x4-x5
 
 #Regresión con x4 y x5
-MCOD_45 <- dynlm(x4 ~ x5 + L(d(x5),-max.lag:max.lag)); summary(MCOD_45)
-
+#Dinámico:
 mcod_seleccion = function(max.lag){
   for (i in 1:max.lag) {
       mcod <- dynlm(x4 ~ x5+ L(d(x5),-i:i))
@@ -740,6 +739,54 @@ mcod_seleccion = function(max.lag){
 mcod_seleccion(max.lag=4) #el mejor es 2,-2
 
 MCOD_45 <- dynlm(x4 ~ x5 + L(d(x5),-2:2)); summary(MCOD_45)
+spread_45=x4-x5
+
+autoplot(cbind(residuals(MCOD_45), spread_45))
+grid.arrange(
+  autoplot(residuals(MCOD_45)),
+  ggAcf(residuals(MCOD_45),lag.max=25,plot=T,lwd=2,xlab='',main='ACF de residuos MCOD_45'),
+  ggPacf(residuals(MCOD_45),lag.max=25,plot=T,lwd=2,xlab='',main='PACF de residuos MCOD_45')
+)
+summary(ur.df(diff(residuals(MCOD_45)), type="none", selectlags = "AIC"))
+checkresiduals(MCOD_45, test = 'BG') #Se rechaza no correlación serial.
+jarque.bera.test(residuals(MCOD_45)) #No normalidad de los residuos.
+
+#Corrección de errores:
+### MODELO DE CORRECI?N DE ERRORES (VECM): Utilizaremos el Beta de la regresi?n del paso 2. 
+### Introduciremos 3 rezagos de cada variable por supuesto. En realidad deber?an comparar
+### varios modelos con diferentes especificaciones por medio del AIC y determinar el mejor
+beta_45<- coefficients(dynlm(x4 ~ x5))[2] 
+
+vecm_seleccion = function(max.lagind, max.lagdep){
+  for (i in 0:max.lagind) {
+    for (j in 0:max.lagdep)  {
+    vecm <- dynlm(d(x4) ~  L(x4-beta_45*x5,1) + L(d(x5), 0:i) + L(d(x4), 0:j))
+    print( c(i, j, AIC(vecm), BIC(vecm)) )
+    }
+  }  
+}
+vecm_seleccion(max.lagind=4, max.lagdep=4)
+
+vecm_seleccion = function(max.lagind, max.lagdep){
+  for (i in 0:max.lagind) {
+    for (j in 0:max.lagdep)  {
+      vecm <- dynlm(d(x5) ~  L(x4-beta_45*x5)+ L(d(x5), 0:j) + L(d(x4), 0:i))
+      print( c(i, j, AIC(vecm), BIC(vecm)) )
+    }
+  }  
+}
+vecm_seleccion(max.lagind=4, max.lagdep=4)
+
+VECM_451 <- dynlm(d(x4) ~  L(x4-beta_45*x5) + L(d(x5), 0:3) + L(d(x4), 0:3)) ;summary(VECM_451) #El par?metro de velocidad de ajuste alpha tiene el signo esperado
+VECM_452 <- dynlm(d(x5) ~  L(x4-beta_45*x5)+ L(d(x5), 0:3) + L(d(x4), 0:3)) ;summary(VECM_452) #El par?metro de velocidad de ajuste alpha tiene el signo esperado
+
+# set up error correction term
+VECM_ECT <- TB10YS - TB3MS
+
+# estimate both equations of the VECM using 'dynlm()'
+VECM_EQ1 <- dynlm(d(TB10YS) ~ L(d(TB3MS), 1:2) + L(d(TB10YS), 1:2) + L(VECM_ECT))
+VECM_EQ2 <- dynlm(d(TB3MS) ~ L(d(TB3MS), 1:2) + L(d(TB10YS), 1:2) + L(VECM_ECT))
+
 
 
 #Cuarto punto####
