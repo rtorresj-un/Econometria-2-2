@@ -758,9 +758,9 @@ jarque.bera.test(residuals(MCOD_45)) #No normalidad de los residuos.
 beta_45<- coefficients(dynlm(x4 ~ x5))[2] 
 
 vecm_seleccion = function(max.lagind, max.lagdep){
-  for (i in 0:max.lagind) {
-    for (j in 0:max.lagdep)  {
-    vecm <- dynlm(d(x4) ~  L(x4-beta_45*x5,1) + L(d(x5), 0:i) + L(d(x4), 0:j))
+  for (i in 1:max.lagind) {
+    for (j in 1:max.lagdep)  {
+    vecm <- dynlm(d(x4) ~  L(x4-beta_45*x5,1) + L(d(x5), 1:i) + L(d(x4), 1:j))
     print( c(i, j, AIC(vecm), BIC(vecm)) )
     }
   }  
@@ -768,17 +768,17 @@ vecm_seleccion = function(max.lagind, max.lagdep){
 vecm_seleccion(max.lagind=4, max.lagdep=4)
 
 vecm_seleccion = function(max.lagind, max.lagdep){
-  for (i in 0:max.lagind) {
-    for (j in 0:max.lagdep)  {
-      vecm <- dynlm(d(x5) ~  L(x4-beta_45*x5)+ L(d(x5), 0:j) + L(d(x4), 0:i))
+  for (i in 1:max.lagind) {
+    for (j in 1:max.lagdep)  {
+      vecm <- dynlm(d(x5) ~  L(x4-beta_45*x5)+ L(d(x5), 1:j) + L(d(x4), 1:i))
       print( c(i, j, AIC(vecm), BIC(vecm)) )
     }
   }  
 }
 vecm_seleccion(max.lagind=4, max.lagdep=4)
 
-VECM_451 <- dynlm(d(x4) ~  L(x4-beta_45*x5) + L(d(x5), 0:3) + L(d(x4), 0:3)) ;summary(VECM_451) #El par?metro de velocidad de ajuste alpha tiene el signo esperado
-VECM_452 <- dynlm(d(x5) ~  L(x4-beta_45*x5)+ L(d(x5), 0:3) + L(d(x4), 0:3)) ;summary(VECM_452) #El par?metro de velocidad de ajuste alpha tiene el signo esperado
+VECM_451 <- dynlm(d(x4) ~  L(x4-beta_45*x5) + L(d(x5), 1:2) + L(d(x4), 1:4)) ;summary(VECM_451) #El par?metro de velocidad de ajuste alpha tiene el signo esperado
+VECM_452 <- dynlm(d(x5) ~  L(x4-beta_45*x5)+ L(d(x5), 1:1) + L(d(x4), 1:2)) ;summary(VECM_452) #El par?metro de velocidad de ajuste alpha tiene el signo esperado
 
 # set up error correction term
 VECM_ECT <- TB10YS - TB3MS
