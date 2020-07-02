@@ -154,7 +154,7 @@ grid.arrange(
 )
 
 # Gráfico serie en primera diferencia y diferencia de los log
-  #Al aplicar log se logra estabilizar la varianza
+#Al aplicar log se logra estabilizar la varianza
 grid.arrange(
   autoplot(diff(IPC_DE)),
   autoplot(diff(log(IPC_DE)))
@@ -162,7 +162,7 @@ grid.arrange(
 BoxCox.ar(IPC_DE)
 monthplot(diff(log(IPC_DE)), col = "midnightblue")
 # Gráfico de autocorrelación simple y parcial diff log
-  #claro componente estacional cada 12 periodo
+#claro componente estacional cada 12 periodo
 grid.arrange(
   ggAcf(diff(log(IPC_DE)),lag.max=64,plot=T,lwd=2,xlab='',main='ACF del IPC'),
   ggPacf(diff(log(IPC_DE)),lag.max=64,plot=T,lwd=2,xlab='',main='PACF del IPC')
@@ -237,8 +237,8 @@ ggtsdiag(arima3)
 arch <-arch.test(arima3, output=TRUE)
 
 fore1<-autoplot(forecast::forecast(arima3, level = c(95), h = 7))+
-                              scale_x_continuous(limit = c(2010, 2025))+
-                              scale_y_continuous(limit = c(4.5, 4.7))
+  scale_x_continuous(limit = c(2010, 2025))+
+  scale_y_continuous(limit = c(4.5, 4.7))
 print(fore1)
 
 
@@ -438,8 +438,8 @@ plot(x3, type = 'l')
 
 #----------X1
 grid.arrange(
-ggAcf(x1,lag.max=25,plot=T,lwd=2,xlab='',main='ACF de x1'),
-ggPacf(x1,lag.max=25,plot=T,lwd=2,xlab='',main='PACF de x1')
+  ggAcf(x1,lag.max=25,plot=T,lwd=2,xlab='',main='ACF de x1'),
+  ggPacf(x1,lag.max=25,plot=T,lwd=2,xlab='',main='PACF de x1')
 )
 ur.df(x1, type = 'none', lags = 15, selectlags = 'AIC')
 
@@ -539,11 +539,11 @@ attach(Data_coin)
 View(Data_coin)
 t<-X
 grid.arrange(
-ggplot(Data_coin, aes(t,x1))+geom_line(colour='Midnightblue'),
-ggplot(Data_coin, aes(t,x2))+geom_line(colour='Midnightblue'),
-ggplot(Data_coin, aes(t,x5))+geom_line(colour='Midnightblue'),
-ggplot(Data_coin, aes(t,x4))+geom_line(colour='Midnightblue'),
-ggplot(Data_coin, aes(t,x3))+geom_line(colour='Midnightblue'))
+  ggplot(Data_coin, aes(t,x1))+geom_line(colour='Midnightblue'),
+  ggplot(Data_coin, aes(t,x2))+geom_line(colour='Midnightblue'),
+  ggplot(Data_coin, aes(t,x5))+geom_line(colour='Midnightblue'),
+  ggplot(Data_coin, aes(t,x4))+geom_line(colour='Midnightblue'),
+  ggplot(Data_coin, aes(t,x3))+geom_line(colour='Midnightblue'))
 
 #----------X1
 grid.arrange(
@@ -640,32 +640,5 @@ summary(c_adf.drift_x3)
 #Resultados x3
 interp_urdf(c_adf.trend_x3,level = "5pct")
 interp_urdf(c_adf.drift_x3,level = "5pct")
-
-# Tercer punto ####
-Data_coin<-read.csv(file.choose())
-x1<-ts(data = Data_coin$x1)
-x2<-ts(data = Data_coin$x2)
-x3<-ts(data = Data_coin$x3)
-x4<-ts(data = Data_coin$x4)
-x5<-ts(data = Data_coin$x5)
-grid.arrange(
-  autoplot(x1),
-  autoplot(x2),
-  autoplot(x3),
-  autoplot(x4),
-  autoplot(x5)
-)
-
-ts.plot(x1,x3,x4, x5, col=c("blue", "red","green","pink"))
-#1 hacer prueba DF a todas las series
-#2 deben tener raiz unitaria
-#3 tienen que ser integradas del mismo orden
-
-#Paso1: Correr regresi?n con intercepto y obtener los residuos
-#Paso2: Realizar la prueba de raiz unitaria para los residuos.
-#causalidad de granger en las variables
-#Ho: no causalidad en el sentido de Granger
-#La causalidad de la oferta monetaria hacia los precios.
-#grangertest(dltp~dltm2, order=1)
 
 #Cuarto punto####
