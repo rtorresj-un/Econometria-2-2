@@ -550,36 +550,30 @@ grid.arrange(
   ggAcf(x1,lag.max=25,plot=T,lwd=2,xlab='',main='ACF de x1'),
   ggPacf(x1,lag.max=25,plot=T,lwd=2,xlab='',main='PACF de x1')
 )
-ur.df(x1, type = 'none', lags = 15, selectlags = 'AIC')
-
-#Como evidenciamos un proceso altamente persistente, es evidente que la serie no es I(0).
 
 
-#El tau me dice si la serie tiene o no al menos una raíz unitaria. El phi3 me dice si la tendecia es 
-#significativa o no, y por tanto, si el el test de raíz unitaria debería incluir o no tendencia. 
 c_adf.trend_x1= ur.df(x1, type="trend", selectlags = "AIC")
 summary(c_adf.trend_x1) 
-#El tau nos dice que la serie tiene al menos una raíz unitaria; tau= -2.242
-#mientras el phi3 nos dice que la tendencia no es significativa. phi3 2.9481 
+#El tau nos dice que la serie tiene al menos una raíz unitaria; tau= -1.6283
+#mientras el phi3 nos dice que la tendencia no es significativa. phi3 1.3664 
 
-#El tau me dice si la serie tiene o no al menos una ra?z unitaria. El phi2 me indica si la deriva es
-#significativa, y por consiguiente, si se debe incluir en el test de ra?z unitaria. 
 c_adf.drift_x1= ur.df(x1, type="drift", selectlags = "AIC")
 summary(c_adf.drift_x1) 
-#Los resultados indican que la serie tiene al menos una raíz unitaria.  -2.2752
-#El phi2, por su parte, indica que la deriva de la serie no es significativa phi=2.6151
+#Los resultados indican que la serie tiene al menos una raíz unitaria. -1.0429
+#El phi2, por su parte, indica que la deriva de la serie no es significativa phi= 0.9399 
 
 #Esta es la correcta especificación de la prueba dado que los términos determinísticos no son significativos. 
 c_adf.none_x1= ur.df(x1, type="none", selectlags = "AIC")
 summary(c_adf.none_x1) 
-#Claramente se evidencia que la serie tiene al menos una raíz unitaria, en tanto no se rechaza la hipótesis nula. 
-#Noten la importancia de determinar si la serie tiene términos detemrminísticos, pues el valor calculado en cada
-#especificación de la prueba cambió de forma importante.
 
-# Resultados x1
+# Resultados x1 # Existe raiz unitaria 
 interp_urdf(c_adf.trend_x1,level = "5pct")
 interp_urdf(c_adf.drift_x1,level = "5pct")
 interp_urdf(c_adf.none_x1,level = "5pct")
+
+c_adf.none_diffx1= ur.df(diff(x1), type="none", selectlags = "AIC")
+summary(c_adf.none_diffx1) 
+interp_urdf(c_adf.none_diffx1,level = "5pct")
 
 #----------X2
 grid.arrange(
@@ -590,29 +584,29 @@ grid.arrange(
 
 #Como evidenciamos un proceso altamente persistente, es evidente que la serie no es I(0).
 
-
-#El tau me dice si la serie tiene o no al menos una raíz unitaria. El phi3 me dice si la tendecia es 
-#significativa o no, y por tanto, si el el test de raíz unitaria debería incluir o no tendencia. 
 c_adf.trend_x2= ur.df(x2, type="trend", selectlags = "AIC")
 summary(c_adf.trend_x2) 
-#El tau nos dice que la serie tiene al menos una raíz unitaria; tau= -1.9054
-#mientras el phi3 nos dice que la tendencia no es significativa. phi3 3.1896 
+#El tau nos dice que la serie tiene al menos una raíz unitaria; tau= -1.6581
+#mientras el phi3 nos dice que la tendencia no es significativa. phi3 1.4109  
 
-#El tau me dice si la serie tiene o no al menos una ra?z unitaria. El phi2 me indica si la deriva es
-#significativa, y por consiguiente, si se debe incluir en el test de ra?z unitaria. 
 c_adf.drift_x2= ur.df(x2, type="drift", selectlags = "AIC")
 summary(c_adf.drift_x2) 
-#Los resultados indican que la serie tiene al menos una raíz unitaria.  0.0549
-#El phi2, por su parte, indica que la deriva NO -es significativa phi=0.6102 
+#Los resultados indican que la serie tiene al menos una raíz unitaria.  -1.0448
+#El phi2, por su parte, indica que la deriva NO -es significativa phi=0.9278 
 
 #Esta es la correcta especificación de la prueba dado que los términos determinísticos no son significativos. 
 c_adf.none_x2= ur.df(x2, type="none", selectlags = "AIC")
 summary(c_adf.none_x2) 
 
-#Resultados x2
+#Resultados x2 # Tiene raiz unitaria
 interp_urdf(c_adf.trend_x2,level = "5pct")
 interp_urdf(c_adf.drift_x2,level = "5pct")
 interp_urdf(c_adf.none_x2,level = "5pct")
+
+c_adf.none_diffx2= ur.df(diff(x2), type="none", selectlags = "AIC")
+summary(c_adf.none_diffx2) 
+interp_urdf(c_adf.none_diffx2,level = "5pct")
+
 
 #----------X3 
 grid.arrange(
@@ -622,23 +616,86 @@ grid.arrange(
 
 #Como evidenciamos un proceso altamente persistente, es evidente que la serie no es I(0).
 
-
-#El tau me dice si la serie tiene o no al menos una raíz unitaria. El phi3 me dice si la tendecia es 
-#significativa o no, y por tanto, si el el test de raíz unitaria debería incluir o no tendencia. 
 c_adf.trend_x3= ur.df(x3, type="trend", selectlags = "AIC")
 summary(c_adf.trend_x3) 
-#El tau nos dice que la serie tiene al menos una raíz unitaria; tau= -1.6528
-#mientras el phi3 nos dice que la tendencia no es significativa. phi3 1.4172  
+#El tau nos dice que la serie tiene al menos una raíz unitaria; tau= -1.4631
+#mientras el phi3 nos dice que la tendencia no es significativa. phi3 1.7561 
 
-#El tau me dice si la serie tiene o no al menos una ra?z unitaria. El phi2 me indica si la deriva es
-#significativa, y por consiguiente, si se debe incluir en el test de ra?z unitaria. 
 c_adf.drift_x3= ur.df(x3, type="drift", selectlags = "AIC")
 summary(c_adf.drift_x3) 
-#Los resultados indican que la serie tiene al menos una raíz unitaria.  0.1126
-#El phi2, por su parte, indica que la deriva es significativa phi=27.6628 
-
+#Los resultados indican que la serie tiene al menos una raíz unitaria. -1.8426
+#El phi2, por su parte, indica que la deriva no es significativa phi=1.9464 
+c_adf.none_x3= ur.df(x3, type="none", selectlags = "AIC")
+summary(c_adf.none_x3) 
 #Resultados x3
 interp_urdf(c_adf.trend_x3,level = "5pct")
 interp_urdf(c_adf.drift_x3,level = "5pct")
+interp_urdf(c_adf.none_x3,level = "5pct")
+
+c_adf.none_diffx3= ur.df(diff(x3), type="none", selectlags = "AIC")
+summary(c_adf.none_diffx3) 
+interp_urdf(c_adf.none_diffx3,level = "5pct")
+
+#----------X4
+grid.arrange(
+  ggAcf(x4,lag.max=25,plot=T,lwd=2,xlab='',main='ACF de x1'),
+  ggPacf(x4,lag.max=25,plot=T,lwd=2,xlab='',main='PACF de x1')
+)
+
+
+c_adf.trend_x4= ur.df(x4, type="trend", selectlags = "AIC")
+summary(c_adf.trend_x4) 
+#El tau nos dice que la serie tiene al menos una raíz unitaria; tau= -1.6398
+#mientras el phi3 nos dice que la tendencia no es significativa. phi3 1.4098 
+
+c_adf.drift_x4= ur.df(x4, type="drift", selectlags = "AIC")
+summary(c_adf.drift_x4) 
+#Los resultados indican que la serie tiene al menos una raíz unitaria. -1.2824 
+#El phi2, por su parte, indica que la deriva de la serie no es significativa phi= 1.0062 
+
+#Esta es la correcta especificación de la prueba dado que los términos determinísticos no son significativos. 
+c_adf.none_x4= ur.df(x4, type="none", selectlags = "AIC")
+summary(c_adf.none_x4) 
+
+# Resultados x1 # Existe raiz unitaria 
+interp_urdf(c_adf.trend_x4,level = "5pct")
+interp_urdf(c_adf.drift_x4,level = "5pct")
+interp_urdf(c_adf.none_x4,level = "5pct")
+
+c_adf.none_diffx4= ur.df(diff(x4), type="none", selectlags = "AIC")
+summary(c_adf.none_diffx4) 
+interp_urdf(c_adf.none_diffx4,level = "5pct")
+
+#----------X5
+grid.arrange(
+  ggAcf(x5,lag.max=25,plot=T,lwd=2,xlab='',main='ACF de x1'),
+  ggPacf(x5,lag.max=25,plot=T,lwd=2,xlab='',main='PACF de x1')
+)
+
+
+c_adf.trend_x5= ur.df(x5, type="trend", selectlags = "AIC")
+summary(c_adf.trend_x5) 
+#El tau nos dice que la serie tiene al menos una raíz unitaria; tau= -1.6398
+#mientras el phi3 nos dice que la tendencia no es significativa. phi3 1.4098 
+
+c_adf.drift_x5= ur.df(x5, type="drift", selectlags = "AIC")
+summary(c_adf.drift_x5) 
+#Los resultados indican que la serie tiene al menos una raíz unitaria. -1.2824 
+#El phi2, por su parte, indica que la deriva de la serie no es significativa phi= 1.0062 
+
+#Esta es la correcta especificación de la prueba dado que los términos determinísticos no son significativos. 
+c_adf.none_x5= ur.df(x5, type="none", selectlags = "AIC")
+summary(c_adf.none_x5) 
+
+# Resultados x1 # Existe raiz unitaria 
+interp_urdf(c_adf.trend_x5,level = "5pct")
+interp_urdf(c_adf.drift_x5,level = "5pct")
+interp_urdf(c_adf.none_x5,level = "5pct")
+
+c_adf.none_diffx5= ur.df(diff(x5), type="none", selectlags = "AIC")
+summary(c_adf.none_diffx5) 
+interp_urdf(c_adf.none_diffx5,level = "5pct")
+
+#### Todas las series son integradas de orden 1 
 
 #Cuarto punto####
