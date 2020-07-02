@@ -641,4 +641,31 @@ summary(c_adf.drift_x3)
 interp_urdf(c_adf.trend_x3,level = "5pct")
 interp_urdf(c_adf.drift_x3,level = "5pct")
 
+# Tercer punto ####
+Data_coin<-read.csv(file.choose())
+x1<-ts(data = Data_coin$x1)
+x2<-ts(data = Data_coin$x2)
+x3<-ts(data = Data_coin$x3)
+x4<-ts(data = Data_coin$x4)
+x5<-ts(data = Data_coin$x5)
+grid.arrange(
+  autoplot(x1),
+  autoplot(x2),
+  autoplot(x3),
+  autoplot(x4),
+  autoplot(x5)
+)
+
+ts.plot(x1,x3,x4, x5, col=c("blue", "red","green","pink"))
+#1 hacer prueba DF a todas las series
+#2 deben tener raiz unitaria
+#3 tienen que ser integradas del mismo orden
+
+#Paso1: Correr regresi?n con intercepto y obtener los residuos
+#Paso2: Realizar la prueba de raiz unitaria para los residuos.
+#causalidad de granger en las variables
+#Ho: no causalidad en el sentido de Granger
+#La causalidad de la oferta monetaria hacia los precios.
+#grangertest(dltp~dltm2, order=1)
+
 #Cuarto punto####
