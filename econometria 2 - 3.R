@@ -701,20 +701,28 @@ interp_urdf(c_adf.none_diffx5,level = "5pct")
 #Prueba de cointegración; ninguna serie presenta tendencia clara, en la prueba no se incluye tendencia lineal.
 ifelse(coint.test(x1, x2, nlag = 1, output = F)["type 1",'EG']<=-3.34, 
        yes = 'Hay evidencia de cointegración al 5%',no = 'No hay evidencia de cointegración al 5%')
-
+ifelse(coint.test(x1, x3, nlag = 1, output = F)["type 1",'EG']<=-3.34, 
+       yes = 'Hay evidencia de cointegración al 5%',no = 'No hay evidencia de cointegración al 5%')
+ifelse(coint.test(x1, x4, nlag = 1, output = F)["type 1",'EG']<=-3.34, 
+       yes = 'Hay evidencia de cointegración al 5%',no = 'No hay evidencia de cointegración al 5%')
+ifelse(coint.test(x1, x5, nlag = 1, output = F)["type 1",'EG']<=-3.34, 
+       yes = 'Hay evidencia de cointegración al 5%',no = 'No hay evidencia de cointegración al 5%')
+ifelse(coint.test(x2, x3, nlag = 1, output = F)["type 1",'EG']<=-3.34, 
+       yes = 'Hay evidencia de cointegración al 5%',no = 'No hay evidencia de cointegración al 5%')
+ifelse(coint.test(x2, x4, nlag = 1, output = F)["type 1",'EG']<=-3.34, 
+       yes = 'Hay evidencia de cointegración al 5%',no = 'No hay evidencia de cointegración al 5%')
+ifelse(coint.test(x2, x5, nlag = 1, output = F)["type 1",'EG']<=-3.34, 
+       yes = 'Hay evidencia de cointegración al 5%',no = 'No hay evidencia de cointegración al 5%')
+ifelse(coint.test(x3, x4, nlag = 1, output = F)["type 1",'EG']<=-3.34, 
+       yes = 'Hay evidencia de cointegración al 5%',no = 'No hay evidencia de cointegración al 5%')
+ifelse(coint.test(x3, x5, nlag = 1, output = F)["type 1",'EG']<=-3.34, 
+       yes = 'Hay evidencia de cointegración al 5%',no = 'No hay evidencia de cointegración al 5%')
 ifelse(coint.test(x4, x5, nlag = 1, output = F)["type 1",'EG']<=-3.34, 
        yes = 'Hay evidencia de cointegración al 5%',no = 'No hay evidencia de cointegración al 5%')
 
-ifelse(coint.test(x1, x3, nlag = 1, output = F)["type 1",'EG']<=-3.34, 
-       yes = 'Hay evidencia de cointegración al 5%',no = 'No hay evidencia de cointegración al 5%')
+# evidencia de cointegracion entre x1-x2 y x4-x5
 
-ifelse(coint.test(x3, x4, nlag = 1, output = F)["type 1",'EG']<=-3.34, 
-       yes = 'Hay evidencia de cointegración al 5%',no = 'No hay evidencia de cointegración al 5%')
 
-ifelse(coint.test(x1, x5, nlag = 1, output = F)["type 1",'EG']<=-3.34, 
-       yes = 'Hay evidencia de cointegración al 5%',no = 'No hay evidencia de cointegración al 5%')
 
-ifelse(coint.test(x1, x4, nlag = 1, output = F)["type 1",'EG']<=-3.34, 
-       yes = 'Hay evidencia de cointegración al 5%',no = 'No hay evidencia de cointegración al 5%')
 
 #Cuarto punto####
