@@ -540,9 +540,9 @@ View(Data_coin)
 t<-X
 grid.arrange(
   ggplot(Data_coin, aes(t,x1))+geom_line(colour='Midnightblue'),
+  ggplot(Data_coin, aes(t,x4))+geom_line(colour='Midnightblue'),
   ggplot(Data_coin, aes(t,x2))+geom_line(colour='Midnightblue'),
   ggplot(Data_coin, aes(t,x5))+geom_line(colour='Midnightblue'),
-  ggplot(Data_coin, aes(t,x4))+geom_line(colour='Midnightblue'),
   ggplot(Data_coin, aes(t,x3))+geom_line(colour='Midnightblue'))
 
 #----------X1
@@ -697,5 +697,17 @@ summary(c_adf.none_diffx5)
 interp_urdf(c_adf.none_diffx5,level = "5pct")
 
 #### Todas las series son integradas de orden 1 
+
+#Prueba de cointegración; ninguna serie presenta tendencia clara, en la prueba no se incluye tendencia lineal.
+coint.test(x1, x2, nlag = 1, output = F)["type 1",]
+
+coint.test(x4, x5, nlag = 1, output = F)["type 1",]
+
+coint.test(x3, x1, nlag = 1, output = F)["type 1",]
+
+coint.test(x3, x4, nlag = 1, output = F)["type 1",]
+
+coint.test(x1, x5, nlag = 1, output = F)["type 1",]
+
 
 #Cuarto punto####
