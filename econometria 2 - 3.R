@@ -291,6 +291,9 @@ jarqueberaTest(mod1.1$residuals)
 plot(mod1$residuals)
 qqnorm(mod1.1$residuals)
 qqline(mod1.1$residuals)
+
+
+
 #Segundo punto####
 Data_UR<-read.csv(file.choose())
 View(Data_UR)
@@ -298,11 +301,237 @@ attach(Data_UR)
 plot(x1, type = 'l')
 plot(x2, type = 'l')
 plot(x3, type = 'l')
+############################################################################
+# This R function helps to interpret the output of the urca::ur.df function.
+interp_urdf <- function(urdf, level="5pct") {
+  if(class(urdf) != "ur.df") stop('parameter is not of class ur.df from urca package')
+  if(!(level %in% c("1pct", "5pct", "10pct") ) ) stop('parameter level is not one of 1pct, 5pct, or 10pct')
+  
+  cat("========================================================================\n")
+  cat( paste("At the", level, "level:\n") )
+  if(urdf@model == "none") {
+    cat("The model is of type none\n")
+    tau1_crit = urdf@cval["tau1",level]
+    tau1_teststat = urdf@teststat["statistic","tau1"]
+    tau1_teststat_wi_crit = tau1_teststat > tau1_crit
+    if(tau1_teststat_wi_crit) {
+      cat("tau1: The null hypothesis is not rejected, unit root is present\n")
+    } else {
+      cat("tau1: The null hypothesis is rejected, unit root is not present\n")
+    }
+  } else if(urdf@model == "drift") {
+    cat("The model is of type drift\n")
+    tau2_crit = urdf@cval["tau2",level]
+    tau2_teststat = urdf@teststat["statistic","tau2"]
+    tau2_teststat_wi_crit = tau2_teststat > tau2_crit
+    phi1_crit = urdf@cval["phi1",level]
+    phi1_teststat = urdf@teststat["statistic","phi1"]
+    phi1_teststat_wi_crit = phi1_teststat < phi1_crit
+    if(tau2_teststat_wi_crit) {
+      # Unit root present branch
+      cat("tau2: The first null hypothesis is not rejected, unit root is present\n")
+      if(phi1_teststat_wi_crit) {
+        cat("phi1: The second null hypothesis is not rejected, unit root is present\n")
+        cat("      and there is no drift.\n")
+      } else {
+        cat("phi1: The second null hypothesis is rejected, unit root is present\n")
+        cat("      and there is drift.\n")
+      }
+    } else {
+      # Unit root not present branch
+      cat("tau2: The first null hypothesis is rejected, unit root is not present\n")
+      if(phi1_teststat_wi_crit) {
+        cat("phi1: The second null hypothesis is not rejected, unit root is present\n")
+        cat("      and there is no drift.\n")
+        warning("This is inconsistent with the first null hypothesis.")
+      } else {
+        cat("phi1: The second null hypothesis is rejected, unit root is not present\n")
+        cat("      and there is drift.\n")
+      }
+    }
+  } else if(urdf@model == "trend") {
+    cat("The model is of type trend\n")
+    tau3_crit = urdf@cval["tau3",level]
+    tau3_teststat = urdf@teststat["statistic","tau3"]
+    tau3_teststat_wi_crit = tau3_teststat > tau3_crit
+    phi2_crit = urdf@cval["phi2",level]
+    phi2_teststat = urdf@teststat["statistic","phi2"]
+    phi2_teststat_wi_crit = phi2_teststat < phi2_crit
+    phi3_crit = urdf@cval["phi3",level]
+    phi3_teststat = urdf@teststat["statistic","phi3"]
+    phi3_teststat_wi_crit = phi3_teststat < phi3_crit
+    if(tau3_teststat_wi_crit) {
+      # First null hypothesis is not rejected, Unit root present branch
+      cat("tau3: The first null hypothesis is not rejected, unit root is present\n")
+      if(phi3_teststat_wi_crit) {
+        # Second null hypothesis is not rejected
+        cat("phi3: The second null hypothesis is not rejected, unit root is present\n")
+        cat("      and there is no trend\n")
+        if(phi2_teststat_wi_crit) {
+          # Third null hypothesis is not rejected
+          # a0-drift = gamma = a2-trend = 0
+          cat("phi2: The third null hypothesis is not rejected, unit root is present\n")
+          cat("      there is no trend, and there is no drift\n")
+        } else {
+          # Third null hypothesis is rejected
+          cat("phi2: The third null hypothesis is rejected, unit root is present\n")
+          cat("      there is no trend, and there is drift\n")
+        }
+      }
+      else {
+        # Second null hypothesis is rejected
+        cat("phi3: The second null hypothesis is rejected, unit root is present\n")
+        cat("      and there is trend\n")
+        if(phi2_teststat_wi_crit) {
+          # Third null hypothesis is not rejected
+          # a0-drift = gamma = a2-trend = 0
+          cat("phi2: The third null hypothesis is not rejected, unit root is present\n")
+          cat("      there is no trend, and there is no drift\n")
+          warning("This is inconsistent with the second null hypothesis.")
+        } else {
+          # Third null hypothesis is rejected
+          cat("phi2: The third null hypothesis is rejected, unit root is present\n")
+          cat("      there is trend, and there may or may not be drift\n")
+          warning("Presence of drift is inconclusive.")
+        }
+      }
+    } else {
+      # First null hypothesis is rejected, Unit root not present branch
+      cat("tau3: The first null hypothesis is rejected, unit root is not present\n")
+      if(phi3_teststat_wi_crit) {
+        cat("phi3: The second null hypothesis is not rejected, unit root is present\n")
+        cat("      and there is no trend\n")
+        warning("This is inconsistent with the first null hypothesis.")
+        if(phi2_teststat_wi_crit) {
+          # Third null hypothesis is not rejected
+          # a0-drift = gamma = a2-trend = 0
+          cat("phi2: The third null hypothesis is not rejected, unit root is present\n")
+          cat("      there is no trend, and there is no drift\n")
+          warning("This is inconsistent with the first null hypothesis.")
+        } else {
+          # Third null hypothesis is rejected
+          cat("phi2: The third null hypothesis is rejected, unit root is not present\n")
+          cat("      there is no trend, and there is drift\n")
+        }
+      } else {
+        cat("phi3: The second null hypothesis is rejected, unit root is not present\n")
+        cat("      and there may or may not be trend\n")
+        warning("Presence of trend is inconclusive.")
+        if(phi2_teststat_wi_crit) {
+          # Third null hypothesis is not rejected
+          # a0-drift = gamma = a2-trend = 0
+          cat("phi2: The third null hypothesis is not rejected, unit root is present\n")
+          cat("      there is no trend, and there is no drift\n")
+          warning("This is inconsistent with the first and second null hypothesis.")
+        } else {
+          # Third null hypothesis is rejected
+          cat("phi2: The third null hypothesis is rejected, unit root is not present\n")
+          cat("      there may or may not be trend, and there may or may not be drift\n")
+          warning("Presence of trend and drift is inconclusive.")
+        }
+      }
+    }
+  } else warning('urdf model type is not one of none, drift, or trend')
+  cat("========================================================================\n")
+}
+############################################################################
+#----------X1----------####  
 grid.arrange(
-ggAcf(x1,lag.max=15,plot=T,lwd=2,xlab='',main='ACF de x1'),
-ggPacf(x1,lag.max=15,plot=T,lwd=2,xlab='',main='PACF de x1')
+ggAcf(x1,lag.max=25,plot=T,lwd=2,xlab='',main='ACF de x1'),
+ggPacf(x1,lag.max=25,plot=T,lwd=2,xlab='',main='PACF de x1')
 )
 ur.df(x1, type = 'none', lags = 15, selectlags = 'AIC')
+
+#Como evidenciamos un proceso altamente persistente, es evidente que la serie no es I(0).
+
+
+#El tau me dice si la serie tiene o no al menos una raíz unitaria. El phi3 me dice si la tendecia es 
+#significativa o no, y por tanto, si el el test de raíz unitaria debería incluir o no tendencia. 
+adf.trend_x1= ur.df(x1, type="trend", selectlags = "AIC")
+summary(adf.trend_x1) 
+#El tau nos dice que la serie tiene al menos una raíz unitaria; tau= -2.242
+#mientras el phi3 nos dice que la tendencia no es significativa. phi3 2.9481 
+
+#El tau me dice si la serie tiene o no al menos una ra?z unitaria. El phi2 me indica si la deriva es
+#significativa, y por consiguiente, si se debe incluir en el test de ra?z unitaria. 
+adf.drift_x1= ur.df(x1, type="drift", selectlags = "AIC")
+summary(adf.drift_x1) 
+#Los resultados indican que la serie tiene al menos una raíz unitaria.  -2.2752
+#El phi2, por su parte, indica que la deriva de la serie no es significativa phi=2.6151
+
+#Esta es la correcta especificación de la prueba dado que los términos determinísticos no son significativos. 
+adf.none_x1= ur.df(x1, type="none", selectlags = "AIC")
+summary(adf.none_x1) 
+#Claramente se evidencia que la serie tiene al menos una raíz unitaria, en tanto no se rechaza la hipótesis nula. 
+#Noten la importancia de determinar si la serie tiene términos detemrminísticos, pues el valor calculado en cada
+#especificación de la prueba cambió de forma importante.
+
+# Resultados x1 ####
+interp_urdf(adf.trend_x1,level = "5pct")
+interp_urdf(adf.drift_x1,level = "5pct")
+interp_urdf(adf.none_x1,level = "5pct")
+
+#----------X2----------####  
+grid.arrange(
+  ggAcf(x2,lag.max=25,plot=T,lwd=2,xlab='',main='ACF de x1'),
+  ggPacf(x2,lag.max=25,plot=T,lwd=2,xlab='',main='PACF de x1')
+)
+
+
+#Como evidenciamos un proceso altamente persistente, es evidente que la serie no es I(0).
+
+
+#El tau me dice si la serie tiene o no al menos una raíz unitaria. El phi3 me dice si la tendecia es 
+#significativa o no, y por tanto, si el el test de raíz unitaria debería incluir o no tendencia. 
+adf.trend_x2= ur.df(x2, type="trend", selectlags = "AIC")
+summary(adf.trend_x2) 
+#El tau nos dice que la serie tiene al menos una raíz unitaria; tau= -1.9054
+#mientras el phi3 nos dice que la tendencia no es significativa. phi3 3.1896 
+
+#El tau me dice si la serie tiene o no al menos una ra?z unitaria. El phi2 me indica si la deriva es
+#significativa, y por consiguiente, si se debe incluir en el test de ra?z unitaria. 
+adf.drift_x2= ur.df(x2, type="drift", selectlags = "AIC")
+summary(adf.drift_x2) 
+#Los resultados indican que la serie tiene al menos una raíz unitaria.  0.0549
+#El phi2, por su parte, indica que la deriva NO -es significativa phi=0.6102 
+
+#Esta es la correcta especificación de la prueba dado que los términos determinísticos no son significativos. 
+adf.none_x2= ur.df(x2, type="none", selectlags = "AIC")
+summary(adf.none_x2) 
+
+#Resultados x2 ####
+interp_urdf(adf.trend_x2,level = "5pct")
+interp_urdf(adf.drift_x2,level = "5pct")
+interp_urdf(adf.none_x2,level = "5pct")
+
+#----------X3----------####  
+grid.arrange(
+  ggAcf(x3,lag.max=25,plot=T,lwd=2,xlab='',main='ACF de x1'),
+  ggPacf(x3,lag.max=25,plot=T,lwd=2,xlab='',main='PACF de x1')
+)
+
+#Como evidenciamos un proceso altamente persistente, es evidente que la serie no es I(0).
+
+
+#El tau me dice si la serie tiene o no al menos una raíz unitaria. El phi3 me dice si la tendecia es 
+#significativa o no, y por tanto, si el el test de raíz unitaria debería incluir o no tendencia. 
+adf.trend_x3= ur.df(x3, type="trend", selectlags = "AIC")
+summary(adf.trend_x3) 
+#El tau nos dice que la serie tiene al menos una raíz unitaria; tau= -1.6528
+#mientras el phi3 nos dice que la tendencia no es significativa. phi3 1.4172  
+
+#El tau me dice si la serie tiene o no al menos una ra?z unitaria. El phi2 me indica si la deriva es
+#significativa, y por consiguiente, si se debe incluir en el test de ra?z unitaria. 
+adf.drift_x3= ur.df(x3, type="drift", selectlags = "AIC")
+summary(adf.drift_x3) 
+#Los resultados indican que la serie tiene al menos una raíz unitaria.  0.1126
+#El phi2, por su parte, indica que la deriva es significativa phi=27.6628 
+
+#Resultados x3 ####
+interp_urdf(adf.trend_x3,level = "5pct")
+interp_urdf(adf.drift_x3,level = "5pct")
+
+
 #Tercer punto####
 Data_coin<-read.csv(file.choose())
 
