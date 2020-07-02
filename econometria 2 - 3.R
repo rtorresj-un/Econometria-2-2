@@ -1,17 +1,17 @@
 #Taller 3 - Econmetría 2####
 #Raul Torres, Juanita Cortes, David Orozco
 library(readr); library(urca); library(tseries); library(gridExtra); library(ggfortify)
-library(forecast); library(seasonal); library(aTSA); library(readxl)
+library(forecast); library(seasonal); library(aTSA); library(readxl); library(timeDate)
 #Primer punto####
 Data_1<-read_delim(file.choose(),";", escape_double = FALSE, trim_ws = TRUE)
 IPC_DE<-ts(data.frame(Data_1)$IPC_DE, frequency = 12, start = 1960)
 
-summary(IPC_DE)
+summary(IPC_DE); kurtosis(IPC_DE)
 start(IPC_DE)
 end(IPC_DE)
 #Clara tendencia de la serie
-monthplot(IPC_DE, col = "midnightblue")
 autoplot(IPC_DE,main = "IPC Alemania (enero 1960 - abril 2020)")
+monthplot(IPC_DE, col = "midnightblue")
 
 # Autocorrelación simple y parcial serie original
 grid.arrange(
@@ -26,6 +26,7 @@ grid.arrange(
   autoplot(diff(log(IPC_DE)))
 )  
 BoxCox.ar(IPC_DE)
+monthplot(diff(log(IPC_DE)), col = "midnightblue")
 # Gráfico de autocorrelación simple y parcial diff log
   #claro componente estacional cada 12 periodo
 grid.arrange(
@@ -50,10 +51,9 @@ autoplot(Diff_s)
 
 # El comportamiento estacional se mantiene en los gráficos de autocorrelación
 
-autoplot(diff(diff(log(IPC_DE)),12))
 grid.arrange(
-  ggAcf(diff(diff(log(IPC_DE)),12),lag.max=30,plot=T,lwd=2,xlab='',main='ACF del IPC'),
-  ggPacf(diff(diff(log(IPC_DE)),12),lag.max=30,plot=T,lwd=2,xlab='',main='PACF del IPC')
+  ggAcf(Diff_s,lag.max=64,plot=T,lwd=2,xlab='',main='ACF del IPC'),
+  ggPacf(Diff_s,lag.max=64,plot=T,lwd=2,xlab='',main='PACF del IPC')
 )
 
 IPC_x11<-seas(diff(log(IPC_DE)),transform.function="none",x11="")
