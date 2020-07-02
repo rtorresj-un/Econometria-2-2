@@ -535,8 +535,14 @@ interp_urdf(adf.drift_x3,level = "5pct")
 detach(Data_UR)
 #Tercer punto####
 Data_coin<-read.csv(file.choose())
+Data_coin<- data.frame(Data_coin)
 attach(Data_coin)
 View(Data_coin)
+x1<-ts(x1, start = 1, frequency = 1)
+x2<-ts(x2, start = 1, frequency = 1)
+x3<-ts(x3, start = 1, frequency = 1)
+x4<-ts(x4, start = 1, frequency = 1)
+x5<-ts(x5, start = 1, frequency = 1)
 t<-X
 grid.arrange(
   ggplot(Data_coin, aes(t,x1))+geom_line(colour='Midnightblue'),
@@ -638,8 +644,8 @@ interp_urdf(c_adf.none_diffx3,level = "5pct")
 
 #----------X4
 grid.arrange(
-  ggAcf(x4,lag.max=25,plot=T,lwd=2,xlab='',main='ACF de x1'),
-  ggPacf(x4,lag.max=25,plot=T,lwd=2,xlab='',main='PACF de x1')
+  ggAcf(x4,lag.max=25,plot=T,lwd=2,xlab='',main='ACF de x4'),
+  ggPacf(x4,lag.max=25,plot=T,lwd=2,xlab='',main='PACF de x4')
 )
 
 
@@ -668,8 +674,8 @@ interp_urdf(c_adf.none_diffx4,level = "5pct")
 
 #----------X5
 grid.arrange(
-  ggAcf(x5,lag.max=25,plot=T,lwd=2,xlab='',main='ACF de x1'),
-  ggPacf(x5,lag.max=25,plot=T,lwd=2,xlab='',main='PACF de x1')
+  ggAcf(x5,lag.max=25,plot=T,lwd=2,xlab='',main='ACF de x5'),
+  ggPacf(x5,lag.max=25,plot=T,lwd=2,xlab='',main='PACF de x5')
 )
 
 
@@ -699,30 +705,41 @@ interp_urdf(c_adf.none_diffx5,level = "5pct")
 #### Todas las series son integradas de orden 1 
 
 #Prueba de cointegración; ninguna serie presenta tendencia clara, en la prueba no se incluye tendencia lineal.
-ifelse(coint.test(x1, x2, nlag = 1, output = F)["type 1",'EG']<=-3.34, 
+ifelse(coint.test(x1, x2, nlag = 1, output = F)["type 1",'EG']<=-3.35, 
        yes = 'Hay evidencia de cointegración al 5%',no = 'No hay evidencia de cointegración al 5%')
-ifelse(coint.test(x1, x3, nlag = 1, output = F)["type 1",'EG']<=-3.34, 
+ifelse(coint.test(x1, x3, nlag = 1, output = F)["type 1",'EG']<=-3.35, 
        yes = 'Hay evidencia de cointegración al 5%',no = 'No hay evidencia de cointegración al 5%')
-ifelse(coint.test(x1, x4, nlag = 1, output = F)["type 1",'EG']<=-3.34, 
+ifelse(coint.test(x1, x4, nlag = 1, output = F)["type 1",'EG']<=-3.35, 
        yes = 'Hay evidencia de cointegración al 5%',no = 'No hay evidencia de cointegración al 5%')
-ifelse(coint.test(x1, x5, nlag = 1, output = F)["type 1",'EG']<=-3.34, 
+ifelse(coint.test(x1, x5, nlag = 1, output = F)["type 1",'EG']<=-3.35, 
        yes = 'Hay evidencia de cointegración al 5%',no = 'No hay evidencia de cointegración al 5%')
-ifelse(coint.test(x2, x3, nlag = 1, output = F)["type 1",'EG']<=-3.34, 
+ifelse(coint.test(x2, x3, nlag = 1, output = F)["type 1",'EG']<=-3.35, 
        yes = 'Hay evidencia de cointegración al 5%',no = 'No hay evidencia de cointegración al 5%')
-ifelse(coint.test(x2, x4, nlag = 1, output = F)["type 1",'EG']<=-3.34, 
+ifelse(coint.test(x2, x4, nlag = 1, output = F)["type 1",'EG']<=-3.35, 
        yes = 'Hay evidencia de cointegración al 5%',no = 'No hay evidencia de cointegración al 5%')
-ifelse(coint.test(x2, x5, nlag = 1, output = F)["type 1",'EG']<=-3.34, 
+ifelse(coint.test(x2, x5, nlag = 1, output = F)["type 1",'EG']<=-3.35, 
        yes = 'Hay evidencia de cointegración al 5%',no = 'No hay evidencia de cointegración al 5%')
-ifelse(coint.test(x3, x4, nlag = 1, output = F)["type 1",'EG']<=-3.34, 
+ifelse(coint.test(x3, x4, nlag = 1, output = F)["type 1",'EG']<=-3.35, 
        yes = 'Hay evidencia de cointegración al 5%',no = 'No hay evidencia de cointegración al 5%')
-ifelse(coint.test(x3, x5, nlag = 1, output = F)["type 1",'EG']<=-3.34, 
+ifelse(coint.test(x3, x5, nlag = 1, output = F)["type 1",'EG']<=-3.35, 
        yes = 'Hay evidencia de cointegración al 5%',no = 'No hay evidencia de cointegración al 5%')
-ifelse(coint.test(x4, x5, nlag = 1, output = F)["type 1",'EG']<=-3.34, 
+ifelse(coint.test(x4, x5, nlag = 1, output = F)["type 1",'EG']<=-3.35, 
        yes = 'Hay evidencia de cointegración al 5%',no = 'No hay evidencia de cointegración al 5%')
 
 # evidencia de cointegracion entre x1-x2 y x4-x5
 
+#Regresión con x4 y x5
+MCOD_45 <- dynlm(x4 ~ x5 + L(d(x5),-max.lag:max.lag)); summary(MCOD_45)
 
+mcod_seleccion = function(max.lag){
+  for (i in 1:max.lag) {
+      mcod <- dynlm(x4 ~ x5+ L(d(x5),-i:i))
+      print( c(i, -i, AIC(mcod), BIC(mcod)) )
+  }  
+}
+mcod_seleccion(max.lag=4) #el mejor es 2,-2
+
+MCOD_45 <- dynlm(x4 ~ x5 + L(d(x5),-2:2)); summary(MCOD_45)
 
 
 #Cuarto punto####
