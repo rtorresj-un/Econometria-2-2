@@ -699,15 +699,20 @@ interp_urdf(c_adf.none_diffx5,level = "5pct")
 #### Todas las series son integradas de orden 1 
 
 #Prueba de cointegración; ninguna serie presenta tendencia clara, en la prueba no se incluye tendencia lineal.
-coint.test(x1, x2, nlag = 1, output = F)["type 1",]
+ifelse(coint.test(x1, x2, nlag = 1, output = F)["type 1",'EG']<=-3.34, 
+       yes = 'Hay evidencia de cointegración al 5%',no = 'No hay evidencia de cointegración al 5%')
 
-coint.test(x4, x5, nlag = 1, output = F)["type 1",]
+ifelse(coint.test(x4, x5, nlag = 1, output = F)["type 1",'EG']<=-3.34, 
+       yes = 'Hay evidencia de cointegración al 5%',no = 'No hay evidencia de cointegración al 5%')
 
-coint.test(x3, x1, nlag = 1, output = F)["type 1",]
+ifelse(coint.test(x1, x3, nlag = 1, output = F)["type 1",'EG']<=-3.34, 
+       yes = 'Hay evidencia de cointegración al 5%',no = 'No hay evidencia de cointegración al 5%')
 
-coint.test(x3, x4, nlag = 1, output = F)["type 1",]
+ifelse(coint.test(x3, x4, nlag = 1, output = F)["type 1",'EG']<=-3.34, 
+       yes = 'Hay evidencia de cointegración al 5%',no = 'No hay evidencia de cointegración al 5%')
 
-coint.test(x1, x5, nlag = 1, output = F)["type 1",]
+ifelse(coint.test(x1, x5, nlag = 1, output = F)["type 1",'EG']<=-3.34, 
+       yes = 'Hay evidencia de cointegración al 5%',no = 'No hay evidencia de cointegración al 5%')
 
 
 #Cuarto punto####
