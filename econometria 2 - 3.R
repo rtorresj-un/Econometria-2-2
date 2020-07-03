@@ -765,7 +765,6 @@ grid.arrange(
   ggPacf(residuals(MCOD_12),lag.max=25,plot=T,lwd=2,xlab='',main='PACF de los Residuos')
 )
 checkresiduals(MCOD_12)
-lags.test = length(x1)/4;lags.test
 
 # Test Box-Pierce para autocorrelaci?n en los residuales
 Box.test(residuals(MCOD_12),lag=250, type = c("Box-Pierce")) #rechazo H0, no se cumple el supuesto. 
@@ -817,8 +816,6 @@ grid.arrange(
 checkresiduals(VECM_12_1)
 jarque.bera.test(residuals(VECM_12_1))
 
-lags.test = length(x1)/4;lags.test
-
 # Test Box-Pierce para autocorrelaci?n en los residuales
 Box.test(residuals(VECM_12_1),lag=250, type = c("Box-Pierce")) 
 Box.test(residuals(VECM_12_1),type='Box-Pierce',lag=20)  
@@ -860,7 +857,20 @@ interp_urdf(raiz12_2,level = "5pct")
 ArchTest(residuals(VECM_12_2), lags = 250) 
 
 #Regresión con x4 y x5
-#Dinámico:
+#MCO
+cointx4_x5<-lm(x4~x5)
+summary(cointx4_x5)
+#prueba de raiz unitaria para los errores
+grid.arrange(
+  ggAcf(residuals(cointx4_x5),lag.max=25,plot=T,lwd=2,xlab='',main='ACF de los Residuos'),
+  ggPacf(residuals(cointx4_x5),lag.max=25,plot=T,lwd=2,xlab='',main='PACF de los Residuos')
+)
+
+ur.residx4_x5<-ur.df(residuals(cointx4_x5),type="none",selectlags = "AIC"); summary(ur.residx4_x5)
+interp_urdf(ur.residx4_x5,level = "5pct") 
+# los residuos son estacionarios se confirma que las series estan cointegradas
+
+#MCOD
 mcod_seleccion = function(max.lag){
   for (i in 1:max.lag) {
       mcod <- dynlm(x4 ~ x5+ L(d(x5),-i:i))
@@ -890,7 +900,6 @@ ArchTest(residuals(MCOD_45),lags = 25) #Se rechaza homoscedasticidad.
 
 #Corrección de errores:
 beta_45<- coefficients(dynlm(x4 ~ x5))[2] 
-beta_54<- coefficients(dynlm(x5 ~ x4))[2] 
 
 vecm_seleccion1 = function(max.lagind, max.lagdep){
   for (i in 0:max.lagind) {
@@ -923,12 +932,12 @@ coeftest(VECM_452, vcov. = vcovHC(VECM_452))
 checkresiduals(VECM_451, test = 'BG', lag = 250)
 checkresiduals(VECM_451, test = 'LB', lag = 250,plot = F)
 jarque.bera.test(residuals(VECM_451))
-ArchTest(residuals(VECM_451), lags = 25)
+ArchTest(residuals(VECM_451), lags = 250)
 #Se cumplen supuestos de normalidad, homoscedasticidad y autocorrelación: errores estacionarios.
 checkresiduals(VECM_452, test = 'BG', lag = 250)
 checkresiduals(VECM_452, test = 'LB', lag = 250,plot = F)
 jarque.bera.test(residuals(VECM_452))
-ArchTest(residuals(VECM_452), lags = 25)
+ArchTest(residuals(VECM_452), lags = 250)
 #Se cumplen supuestos de normalidad, homoscedasticidad y autocorrelación: errores estacionarios.
 
 #Cuarto punto####
