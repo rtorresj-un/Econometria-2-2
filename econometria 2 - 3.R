@@ -1,7 +1,7 @@
 #Taller 3 - Econmetría 2####
 #Raul Torres, Juanita Cortes, David Orozco
-library(readr); library(urca); library(tseries); library(gridExtra); library(ggfortify)
-library(forecast); library(seasonal); library(aTSA); library(readxl); library(timeDate)
+library(readr); library(urca); library(tseries); library(gridExtra); library(ggfortify); library(sandwich)
+library(forecast); library(seasonal); library(aTSA); library(readxl); library(timeDate); library(FinTS)
 ############################################################################
 # This R function helps to interpret the output of the urca::ur.df function.
 interp_urdf <- function(urdf, level="5pct") {
@@ -747,46 +747,54 @@ grid.arrange(
   ggAcf(residuals(MCOD_45),lag.max=25,plot=T,lwd=2,xlab='',main='ACF de residuos MCOD_45'),
   ggPacf(residuals(MCOD_45),lag.max=25,plot=T,lwd=2,xlab='',main='PACF de residuos MCOD_45')
 )
+# Usando errores estandar robustos
+coeftest(MCOD_45, vcov. = vcovHC(MCOD_45))
+#Verificando residuos
 summary(ur.df(diff(residuals(MCOD_45)), type="none", selectlags = "AIC"))
 checkresiduals(MCOD_45, test = 'BG') #Se rechaza no correlación serial.
 jarque.bera.test(residuals(MCOD_45)) #No normalidad de los residuos.
+ArchTest(residuals(MCOD_45),lags = 25) #Se rechaza homoscedasticidad.
+#Necesario corregir por errores.
 
 #Corrección de errores:
-### MODELO DE CORRECI?N DE ERRORES (VECM): Utilizaremos el Beta de la regresi?n del paso 2. 
-### Introduciremos 3 rezagos de cada variable por supuesto. En realidad deber?an comparar
-### varios modelos con diferentes especificaciones por medio del AIC y determinar el mejor
 beta_45<- coefficients(dynlm(x4 ~ x5))[2] 
+beta_54<- coefficients(dynlm(x5 ~ x4))[2] 
 
-vecm_seleccion = function(max.lagind, max.lagdep){
-  for (i in 1:max.lagind) {
-    for (j in 1:max.lagdep)  {
+vecm_seleccion1 = function(max.lagind, max.lagdep){
+  for (i in 0:max.lagind) {
+    for (j in 0:max.lagdep)  {
     vecm <- dynlm(d(x4) ~  L(x4-beta_45*x5,1) + L(d(x5), 0:i) + L(d(x4), 0:j))
     print( c(i, j, AIC(vecm), BIC(vecm)) )
     }
   }  
 }
-vecm_seleccion(max.lagind=4, max.lagdep=4)
+vecm_seleccion1(max.lagind=4, max.lagdep=4) #El mejor es con 1 y 1 rezagos en independiente y dependiente
 
-vecm_seleccion = function(max.lagind, max.lagdep){
-  for (i in 1:max.lagind) {
-    for (j in 1:max.lagdep)  {
-      vecm <- dynlm(d(x5) ~  L(x4-beta_45*x5)+ L(d(x5), 1:j) + L(d(x4), 1:i))
+vecm_seleccion2 = function(max.lagind, max.lagdep){
+  for (i in 0:max.lagind) {
+    for (j in 0:max.lagdep)  {
+      vecm <- dynlm(d(x5) ~  L(x4-beta_45*x5,1)+ L(d(x5), 0:j) + L(d(x4), 0:i))
       print( c(i, j, AIC(vecm), BIC(vecm)) )
     }
   }  
 }
-vecm_seleccion(max.lagind=4, max.lagdep=4)
+vecm_seleccion2(max.lagind=4, max.lagdep=4)#El mejor es con 1 y 3 rezagos en independiente y dependiente
 
-VECM_451 <- dynlm(d(x4) ~  L(x4-beta_45*x5) + L(d(x5), 1:3) + L(d(x4), 1:3)) ;summary(VECM_451) #El par?metro de velocidad de ajuste alpha tiene el signo esperado
-VECM_452 <- dynlm(d(x5) ~  L(x4-beta_45*x5)+ L(d(x5), 1:3) + L(d(x4), 1:3)) ;summary(VECM_452) #El par?metro de velocidad de ajuste alpha tiene el signo esperado
+VECM_451 <- dynlm(d(x4) ~  L(x4-beta_45*x5) + L(d(x4), 1) + L(d(x5),1)) ;summary(VECM_451) #El par?metro de velocidad de ajuste alpha tiene el signo esperado
+VECM_452 <- dynlm(d(x5) ~  L(x4-beta_45*x5)+ L(d(x5), 1:3) + L(d(x4),1)) ;summary(VECM_452) #El par?metro de velocidad de ajuste alpha tiene el signo esperado
 
-# set up error correction term
-VECM_ECT <- TB10YS - TB3MS
-
-# estimate both equations of the VECM using 'dynlm()'
-VECM_EQ1 <- dynlm(d(TB10YS) ~ L(d(TB3MS), 1:2) + L(d(TB10YS), 1:2) + L(VECM_ECT))
-VECM_EQ2 <- dynlm(d(TB3MS) ~ L(d(TB3MS), 1:2) + L(d(TB10YS), 1:2) + L(VECM_ECT))
-
-
+# Usando errores estandar robustos
+coeftest(VECM_451, vcov. = vcovHC(VECM_451))
+# Usando errores estandar robustos
+coeftest(VECM_452, vcov. = vcovHC(VECM_452))
+#Verificación de residuos
+checkresiduals(VECM_451, test = 'BG')
+jarque.bera.test(residuals(VECM_451))
+ArchTest(residuals(VECM_451), lags = 25)
+#Se cumplen supuestos de normalidad, homoscedasticidad y autocorrelación: errores estacionarios.
+checkresiduals(VECM_452, test = 'BG')
+jarque.bera.test(residuals(VECM_452))
+ArchTest(residuals(VECM_452), lags = 25)
+#Se cumplen supuestos de normalidad, homoscedasticidad y autocorrelación: errores estacionarios.
 
 #Cuarto punto####
