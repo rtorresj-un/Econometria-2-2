@@ -726,7 +726,9 @@ ifelse(coint.test(x3, x5, nlag = 1, output = F)["type 1",'EG']<=-3.35,
 ifelse(coint.test(x4, x5, nlag = 1, output = F)["type 1",'EG']<=-3.35, 
        yes = 'Hay evidencia de cointegración al 5%',no = 'No hay evidencia de cointegración al 5%')
 
-# evidencia de cointegracion entre x1-x2 y x4-x5
+#Evidencia de cointegracion entre x1-x2 y x4-x5
+
+
 
 #Regresión con x4 y x5
 #Dinámico:
