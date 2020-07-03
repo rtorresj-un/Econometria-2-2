@@ -727,8 +727,138 @@ ifelse(coint.test(x4, x5, nlag = 1, output = F)["type 1",'EG']<=-3.35,
        yes = 'Hay evidencia de cointegración al 5%',no = 'No hay evidencia de cointegración al 5%')
 
 #Evidencia de cointegracion entre x1-x2 y x4-x5
+# Metodología engle granger x1-x2 ####
+
+#paso1: regresión y estimar errores
+#MCO
+cointx1_x2<-lm(x2~x1)
+summary(cointx1_x2)
+residx1_x2<-cointx1_x2$residuals
+#prueba de raiz unitaria para los errores
+grid.arrange(
+  ggAcf(residx1_x2,lag.max=25,plot=T,lwd=2,xlab='',main='ACF de los Residuos'),
+  ggPacf(residx1_x2,lag.max=25,plot=T,lwd=2,xlab='',main='PACF de los Residuos')
+)
+
+raizx1_x2<-ur.df(residx1_x2,type="none",selectlags = "AIC")
+summary(raizx1_x2)
+interp_urdf(raizx1_x2,level = "5pct") 
+# los residuos son estacionarios se confirma que las series estan cointegradas
+
+# MCOD 
+max.lag=20
+mcod_seleccion = function(max.lag){
+  for (i in 1:max.lag) {
+    mcod <- dynlm(x1 ~ x2+ L(d(x2),-i:i))
+    print( c(i, -i, AIC(mcod), BIC(mcod)) )
+  }  
+}
+mcod_seleccion(max.lag=20) #el mejor es 1,-1
+
+MCOD_12 <- dynlm(x2 ~ x1 + L(d(x1),-1:1)); summary(MCOD_12)
+DF_MCOD12<-(ur.df(residuals(MCOD_12), type = "none", selectlags = "AIC"))
+interp_urdf(DF_MCOD12,level = "5pct") # NO HAY RAIZ UNITARIA 
+
+# VERIFICACIÓN DE SUPUESTOS
+grid.arrange(
+  ggAcf(residuals(MCOD_12),lag.max=25,plot=T,lwd=2,xlab='',main='ACF de los Residuos'),
+  ggPacf(residuals(MCOD_12),lag.max=25,plot=T,lwd=2,xlab='',main='PACF de los Residuos')
+)
+checkresiduals(MCOD_12)
+lags.test = length(x1)/4;lags.test
+
+# Test Box-Pierce para autocorrelaci?n en los residuales
+Box.test(residuals(MCOD_12),lag=250, type = c("Box-Pierce")) #rechazo H0, no se cumple el supuesto. 
+Box.test(residuals(MCOD_12),type='Box-Pierce',lag=20) #rechazo H0, no se cumple el supuesto. 
+Box.test(residuals(MCOD_12),type='Box-Pierce',lag=30) #rechazo H0,  no se cumple el supuesto.
+
+# Test  Ljung-Box para autocorrelaci?n en los residuales.
+Box.test(residuals(MCOD_12),lag=250, type = c("Ljung-Box")) #rechazo H0, no se cumple el supuesto.
+Box.test(residuals(MCOD_12),type='Ljung-Box',lag=20) #rechazo H0, no se cumple el supuesto.
+Box.test(residuals(MCOD_12),type='Ljung-Box',lag=30) #rechazo H0, no se cumple el supuesto.
+
+# Usando errores estandar robustos
+library(sandwich)
+mvc12=vcovHC(MCOD_12,method = "arellano") # matrix de var-con consistente a Corr
+coeftest(MCOD_12,mvc12) 
+
+# Modelo de correccion d errores
+beta_12<- coefficients(dynlm(x1 ~ x2))[2] ;beta_12
+vecm_seleccion = function(max.lagind, max.lagdep){
+  for (i in 0:max.lagind) {
+    for (j in 0:max.lagdep)  {
+      vecm <- dynlm(d(x1) ~  L(x1-beta_12*x2) + L(d(x2), 0:i) + L(d(x1), 0:j))
+      print( c(i, j, AIC(vecm), BIC(vecm)) )
+    }
+  }  
+}
+vecm_seleccion(max.lagind=6, max.lagdep=6)
+
+vecm_seleccion2 = function(max.lagind, max.lagdep){
+  for (i in 0:max.lagind) {
+    for (j in 0:max.lagdep)  {
+      vecm <- dynlm(d(x2) ~  L(x1-beta_12*x2)+ L(d(x2), 0:j) + L(d(x1), 0:i))
+      print( c(i, j, AIC(vecm), BIC(vecm)) )
+    }
+  }  
+}
+vecm_seleccion2(max.lagind=7, max.lagdep=7)
+
+VECM_12_1 <- dynlm(d(x1) ~  L(x1-beta_12*x2) + L(d(x2), 0) + L(d(x1))) ;summary(VECM_12_1) 
+
+VECM_12_2 <- dynlm(d(x2) ~  L(x1-beta_12*x2,1) + L(d(x2)) + L(d(x1), 0)) 
+summary(VECM_12_2)
 
 
+# VERIFICACIÓN DE SUPUESTOS 1 ####
+grid.arrange(
+  ggAcf(residuals(VECM_12_1),lag.max=25,plot=T,lwd=2,xlab='',main='ACF de los Residuos'),
+  ggPacf(residuals(VECM_12_1),lag.max=25,plot=T,lwd=2,xlab='',main='PACF de los Residuos')
+)
+checkresiduals(VECM_12_1)
+jarque.bera.test(residuals(VECM_12_1))
+
+lags.test = length(x1)/4;lags.test
+
+# Test Box-Pierce para autocorrelaci?n en los residuales
+Box.test(residuals(VECM_12_1),lag=250, type = c("Box-Pierce")) 
+Box.test(residuals(VECM_12_1),type='Box-Pierce',lag=20)  
+Box.test(residuals(VECM_12_1),type='Box-Pierce',lag=30) 
+
+# Test  Ljung-Box para autocorrelaci?n en los residuales.
+Box.test(residuals(VECM_12_1),lag=250, type = c("Ljung-Box")) 
+Box.test(residuals(VECM_12_1),type='Ljung-Box',lag=20) 
+Box.test(residuals(VECM_12_1),type='Ljung-Box',lag=30) 
+
+raiz12_1<-ur.df(residuals(VECM_12_1),type="none",selectlags = "AIC")
+summary(raiz12_1)
+interp_urdf(raiz12_1,level = "5pct") 
+
+ArchTest(residuals(VECM_12_1), lags = 250) 
+
+# VERIFICACIÓN DE SUPUESTOS 2 ####
+grid.arrange(
+  ggAcf(residuals (VECM_12_2),lag.max=25,plot=T,lwd=2,xlab='',main='ACF de los Residuos'),
+  ggPacf(residuals(VECM_12_2),lag.max=25,plot=T,lwd=2,xlab='',main='PACF de los Residuos')
+)
+checkresiduals(VECM_12_2)
+jarque.bera.test(residuals(VECM_12_2))
+
+# Test Box-Pierce para autocorrelaci?n en los residuales
+Box.test(residuals(VECM_12_2),lag=250, type = c("Box-Pierce")) 
+Box.test(residuals(VECM_12_2),type='Box-Pierce',lag=20) 
+Box.test(residuals(VECM_12_2),type='Box-Pierce',lag=30) 
+
+# Test  Ljung-Box para autocorrelaci?n en los residuales.
+Box.test(residuals(VECM_12_2),lag=250, type = c("Ljung-Box")) 
+Box.test(residuals(VECM_12_2),type='Ljung-Box',lag=20) 
+Box.test(residuals(VECM_12_2),type='Ljung-Box',lag=30)
+
+raiz12_2<-ur.df(residuals(VECM_12_2),type="none",selectlags = "AIC")
+summary(raiz12_2)
+interp_urdf(raiz12_2,level = "5pct") 
+
+ArchTest(residuals(VECM_12_2), lags = 250) 
 
 #Regresión con x4 y x5
 #Dinámico:
