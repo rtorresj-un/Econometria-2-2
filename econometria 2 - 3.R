@@ -141,8 +141,7 @@ Data_1<-read_delim(file.choose(),";", escape_double = FALSE, trim_ws = TRUE)
 IPC_DE<-ts(data.frame(Data_1)$IPC_DE, frequency = 12, start = 1960)
 
 summary(IPC_DE); kurtosis(IPC_DE)
-start(IPC_DE)
-end(IPC_DE)
+start(IPC_DE); end(IPC_DE)
 #Clara tendencia de la serie
 autoplot(IPC_DE,main = "IPC Alemania (enero 1960 - abril 2020)")
 monthplot(IPC_DE, col = "midnightblue")
@@ -159,7 +158,6 @@ grid.arrange(
   autoplot(diff(IPC_DE)),
   autoplot(diff(log(IPC_DE)))
 )  
-BoxCox.ar(IPC_DE)
 monthplot(diff(log(IPC_DE)), col = "midnightblue")
 # Gráfico de autocorrelación simple y parcial diff log
 #claro componente estacional cada 12 periodo
@@ -172,9 +170,9 @@ grid.arrange(
 #El tau me dice si la serie tiene o no al menos una raíz unitaria. 
 #El phi3 me dice si la tendecia es significativa
 #El phi2 me indica si la deriva es significativa
-summary(ur.df(IPC_DE,type = 'trend'))
-summary(ur.df(IPC_DE,type = 'drift'))
-summary(ur.df(IPC_DE,type = 'none'))
+summary(ur.df(IPC_DE,type = 'trend'));interp_urdf(ur.df(IPC_DE,type = 'trend'),level = "5pct")
+summary(ur.df(IPC_DE,type = 'drift'));interp_urdf(ur.df(IPC_DE,type = 'drift'),level = "5pct")
+#summary(ur.df(IPC_DE,type = 'none'));interp_urdf(ur.df(IPC_DE,type = 'none'),level = "5pct")
 
 #Transformaciones
 Diff_log<- diff(log(IPC_DE))
@@ -186,8 +184,8 @@ autoplot(Diff_s)
 # El comportamiento estacional se mantiene en los gráficos de autocorrelación
 
 grid.arrange(
-  ggAcf(Diff_s,lag.max=64,plot=T,lwd=2,xlab='',main='ACF del IPC'),
-  ggPacf(Diff_s,lag.max=64,plot=T,lwd=2,xlab='',main='PACF del IPC')
+  ggAcf(Diff_s,lag.max=64,plot=T,lwd=2,xlab='',main='ACF del IPC diferenciado estacional'),
+  ggPacf(Diff_s,lag.max=64,plot=T,lwd=2,xlab='',main='PACF del IPC diferenciado estacional')
 )
 
 IPC_x11<-seas(diff(log(IPC_DE)),transform.function="none",x11="")
@@ -199,14 +197,14 @@ autoplot(stl(diff(log(IPC_DE)), s.window = 'periodic')$time.series[,2])
 arima<-auto.arima(Diff_s)
 arima1<-arima(diff(log(IPC_DE)),order=c(1,0,0),seasonal=list(order=c(0,1,1),period=12))
 arima2<-arima(diff(log(IPC_DE)),order=c(0,0,1),seasonal=list(order=c(0,1,1),period=12))
-arima3<-arima(log(IPC_DE),order=c(1,1,1),seasonal=list(order=c(0,1,2),period=12))
+arima3<-arima(log(IPC_DE),order=c(2,2,3),seasonal=list(order=c(0,0,2),period=12))
 arima4<-arima(diff(log(IPC_DE)),order=c(0,0,2),seasonal=list(order=c(0,1,1),period=12))
 
 AR=3; MA=3
 arma_seleccion = function(AR.m, MA.m){
   for (i in 0:AR) {
     for (j in 0:MA)  {
-      fitp <- arima(log(IPC_DE), order = c(i, 1, j), seasonal=list(order=c(0,1,2),period=12))
+      fitp <- arima(diff(log(IPC_DE)), order = c(i, 0, j), seasonal=list(order=c(0,1,2),period=12))
       print( c(i, j, AIC(fitp), BIC(fitp)) )
     }
   }
@@ -214,7 +212,7 @@ arma_seleccion = function(AR.m, MA.m){
 
 arma_seleccion(AR.m, MA.m)
 
-ts.plot( log(IPC_DE), fitted(arima3), col=c('blue', 'red'))
+autoplot(cbind(log(IPC_DE), fitted(arima3)))
 
 hist(residuals(arima3))
 qqnorm(residuals(arima3))
@@ -227,9 +225,9 @@ grid.arrange(
   ggPacf(residuals(arima3),lag.max=30,plot=T,lwd=2,xlab='',main='PACF del IPC')
 )
 
-summary(ur.df(fitted(arima3),type = 'trend'))
-summary(ur.df(fitted(arima3),type = 'drift'))
-summary(ur.df(fitted(arima3),type = 'none'))
+summary(ur.df(residuals(arima3),type = 'trend'))
+summary(ur.df(residuals(arima3),type = 'drift'))
+summary(ur.df(residuals(arima3),type = 'none'));interp_urdf(ur.df(residuals(arima3),type = 'none'),level = "5pct")
 
 Box.test(residuals(arima3),type='Ljung-Box',lag=length(IPC_DE)/4)
 Box.test(residuals(arima3),type='Box-Pierce',lag=length(IPC_DE)/4)
@@ -262,37 +260,37 @@ boxplot(M2~ciclo)
 
 #Descomponer la serie (componente tendencial, estacional y aleatorio)
 descompos = stl(M2,s.window = "periodic")
-plot(descompos)
+autoplot(descompos)
 
 
 #fac no decae rapidamente, indicios de tendencia 
-acf(M2)
-pacf(M2)
-Diff_log_m2<-diff(log(M2))
-
-
+grid.arrange(
+  ggAcf(M2,lag.max=30,plot=T,lwd=2,xlab='',main='ACF del M2'),
+  ggPacf(M2,lag.max=30,plot=T,lwd=2,xlab='',main='PACF del M2')
+)
 
 # Vamos a aplicar el test de raíz unitaria Dickey-Fuller, el cual nos dice si 
 # una serie tiene raíz unitaria o no. La hipótesis nula es que la serie tiene al menos una 
 # raíz unitaria (no es estacionaria), mientras la hipótesis alternativa dice que es estacionaria. 
 
-DF.Test = ur.df(Diff_log_m2, type="none", selectlags = "AIC")
-summary(DF.Test) #Rechazo la hipótesis nula, asi que Diff_log_m2 es estacionaria. 
+summary(ur.df(M2,type = 'trend'));interp_urdf(ur.df(M2,type = 'trend'),level = "5pct")
+#summary(ur.df(M2,type = 'drift'));interp_urdf(ur.df(M2,type = 'drift'),level = "5pct")
+#summary(ur.df(M2,type = 'none'));interp_urdf(ur.df(M2,type = 'none'),level = "5pct")
+
+Diff_log_m2<-diff(log(M2))
+grid.arrange(
+  autoplot(diff(M2)),
+  autoplot(diff(log(M2)))
+)  
 
 # fac y facp de la serie transformada 
 grid.arrange(
-  ggAcf(Diff_log_m2,lag.max=20,plot=T,lwd=2,xlab='',main='ACF del IPC'),
-  ggPacf(Diff_log_m2,lag.max=30,plot=T,lwd=2,xlab='',main='PACF del IPC')
+  ggAcf(Diff_log_m2,lag.max=30,plot=T,lwd=2,xlab='',main='ACF del M2'),
+  ggPacf(Diff_log_m2,lag.max=30,plot=T,lwd=2,xlab='',main='PACF del M2')
 )
-
-#doble diferencia
-grid.arrange(
-  ggAcf(diff(Diff_log_m2),lag.max=20,plot=T,lwd=2,xlab='',main='ACF del IPC'),
-  ggPacf(diff(Diff_log_m2),lag.max=30,plot=T,lwd=2,xlab='',main='PACF del IPC')
-)
-
-autoplot(diff(diff(M2)))
-autoplot(Diff_log_m2)
+summary(ur.df(Diff_log_m2,type = 'trend'));interp_urdf(ur.df(Diff_log_m2,type = 'trend'),level = "5pct")
+summary(ur.df(Diff_log_m2,type = 'drift'));interp_urdf(ur.df(Diff_log_m2,type = 'drift'),level = "5pct")
+summary(ur.df(Diff_log_m2,type = 'none'));interp_urdf(ur.df(Diff_log_m2,type = 'none'),level = "5pct")
 
 mar <- 4
 mma <- 4
@@ -316,15 +314,17 @@ mod2<-arima(x = Diff_log_m2,order = c(1,0,4))
 mod3<-arima(x = Diff_log_m2,order = c(3,0,4))
 
 #ARIMA (4,1,4) de serie lm
-mod4<-arima(x = Diff_log_m2,order = c(1,0,2),include.mean = TRUE)
+mod4<-Arima(y = Diff_log_m2,order = c(3,0,2), xreg = cbind(da, db))
 
 #ARIMA (4,1,4) de serie lm
 mod5<-arima(x = Diff_log_m2,order = c(3,0,2))
 
-library(lmtest)
 coeftest(mod2)  
 #significativos mod 2,4,5
 
+auto.arima(Diff_log_m2)
+
+autoplot(cbind(Diff_log_m2, fitted(mod4)))
 
 # Validacion del modelo
 layout(matrix(1:2, ncol = 2, nrow = 1))
@@ -336,8 +336,34 @@ for (i in 1:24) {print( Box.test(resid(mod5), lag=i,  type="Ljung") )}
 normalTest(mod5$resid, method="jb")
 jarque.bera.test(mod5$residuals)
 hist(mod5$residuals)
-plot(mod5$residuals)
+qqnorm(mod4$residuals)
 
+Diff_log_m2_t<-Diff_log_m2
+which.max(Diff_log_m2_t)
+Diff_log_m2_t[735]<- NA
+which.max(Diff_log_m2_t)
+Diff_log_m2_t[736]<- NA
+which.max(Diff_log_m2_t)
+Diff_log_m2_t[734]<- NA
+which.max(Diff_log_m2_t)
+Diff_log_m2_t[288]<- NA
+which.max(Diff_log_m2_t)
+Diff_log_m2_t[631]<- NA
+which.max(Diff_log_m2_t)
+Diff_log_m2_t[599]<- NA
+which.max(Diff_log_m2_t)
+Diff_log_m2_t[512]<- NA
+which.min(Diff_log_m2_t)
+Diff_log_m2_t[133]<- NA
+which.min(Diff_log_m2_t)
+Diff_log_m2_t[536]<- NA
+which.min(Diff_log_m2_t)
+Diff_log_m2_t[612]<- NA
+
+da <- ts(rep(0,length(Diff_log_m2)), frequency = 12, start = 1960)
+da[735]<-1;da[736]<-1;da[734]<-1
+db <- ts(rep(0,length(Diff_log_m2)), frequency = 12, start = 1960)
+db[288]<-1;db[631]<-1;db[599]<-1; db[512]<-1; db[133]<-1; db[536]<-1; db[612]<-1
 
 # parentesis
 which.max(mod4$resid)
@@ -727,7 +753,7 @@ ifelse(coint.test(x4, x5, nlag = 1, output = F)["type 1",'EG']<=-3.35,
        yes = 'Hay evidencia de cointegración al 5%',no = 'No hay evidencia de cointegración al 5%')
 
 #Evidencia de cointegracion entre x1-x2 y x4-x5
-# Metodología engle granger x1-x2 ####
+# Metodología engle granger x1-x2
 
 #paso1: regresión y estimar errores
 #MCO
@@ -832,7 +858,7 @@ interp_urdf(raiz12_1,level = "5pct")
 
 ArchTest(residuals(VECM_12_1), lags = 250) 
 
-# VERIFICACIÓN DE SUPUESTOS 2 ####
+# VERIFICACIÓN DE SUPUESTOS 2
 grid.arrange(
   ggAcf(residuals (VECM_12_2),lag.max=25,plot=T,lwd=2,xlab='',main='ACF de los Residuos'),
   ggPacf(residuals(VECM_12_2),lag.max=25,plot=T,lwd=2,xlab='',main='PACF de los Residuos')
@@ -856,7 +882,7 @@ interp_urdf(raiz12_2,level = "5pct")
 
 ArchTest(residuals(VECM_12_2), lags = 250) 
 
-#Regresión con x4 y x5
+# Metodología engle granger x4-x5
 #MCO
 cointx4_x5<-lm(x4~x5)
 summary(cointx4_x5)
@@ -939,5 +965,6 @@ checkresiduals(VECM_452, test = 'LB', lag = 250,plot = F)
 jarque.bera.test(residuals(VECM_452))
 ArchTest(residuals(VECM_452), lags = 250)
 #Se cumplen supuestos de normalidad, homoscedasticidad y autocorrelación: errores estacionarios.
-
+detach(Data_coin)
 #Cuarto punto####
+
