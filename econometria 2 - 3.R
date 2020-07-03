@@ -778,7 +778,6 @@ Box.test(residuals(MCOD_12),type='Ljung-Box',lag=20) #rechazo H0, no se cumple e
 Box.test(residuals(MCOD_12),type='Ljung-Box',lag=30) #rechazo H0, no se cumple el supuesto.
 
 # Usando errores estandar robustos
-library(sandwich)
 mvc12=vcovHC(MCOD_12,method = "arellano") # matrix de var-con consistente a Corr
 coeftest(MCOD_12,mvc12) 
 
@@ -810,7 +809,7 @@ VECM_12_2 <- dynlm(d(x2) ~  L(x1-beta_12*x2,1) + L(d(x2)) + L(d(x1), 0))
 summary(VECM_12_2)
 
 
-# VERIFICACIÓN DE SUPUESTOS 1 ####
+# VERIFICACIÓN DE SUPUESTOS 1
 grid.arrange(
   ggAcf(residuals(VECM_12_1),lag.max=25,plot=T,lwd=2,xlab='',main='ACF de los Residuos'),
   ggPacf(residuals(VECM_12_1),lag.max=25,plot=T,lwd=2,xlab='',main='PACF de los Residuos')
@@ -883,7 +882,8 @@ grid.arrange(
 coeftest(MCOD_45, vcov. = vcovHC(MCOD_45))
 #Verificando residuos
 summary(ur.df(diff(residuals(MCOD_45)), type="none", selectlags = "AIC"))
-checkresiduals(MCOD_45, test = 'BG') #Se rechaza no correlación serial.
+checkresiduals(MCOD_45, test = 'BG', lag = 250) #Se rechaza no correlación serial.
+checkresiduals(MCOD_45, test = 'LB', lag = 250, plot = F) #Se rechaza no correlación serial.
 jarque.bera.test(residuals(MCOD_45)) #No normalidad de los residuos.
 ArchTest(residuals(MCOD_45),lags = 25) #Se rechaza homoscedasticidad.
 #Necesario corregir por errores.
@@ -920,11 +920,13 @@ coeftest(VECM_451, vcov. = vcovHC(VECM_451))
 # Usando errores estandar robustos
 coeftest(VECM_452, vcov. = vcovHC(VECM_452))
 #Verificación de residuos
-checkresiduals(VECM_451, test = 'BG')
+checkresiduals(VECM_451, test = 'BG', lag = 250)
+checkresiduals(VECM_451, test = 'LB', lag = 250,plot = F)
 jarque.bera.test(residuals(VECM_451))
 ArchTest(residuals(VECM_451), lags = 25)
 #Se cumplen supuestos de normalidad, homoscedasticidad y autocorrelación: errores estacionarios.
-checkresiduals(VECM_452, test = 'BG')
+checkresiduals(VECM_452, test = 'BG', lag = 250)
+checkresiduals(VECM_452, test = 'LB', lag = 250,plot = F)
 jarque.bera.test(residuals(VECM_452))
 ArchTest(residuals(VECM_452), lags = 25)
 #Se cumplen supuestos de normalidad, homoscedasticidad y autocorrelación: errores estacionarios.
