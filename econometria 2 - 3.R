@@ -140,23 +140,24 @@ interp_urdf <- function(urdf, level="5pct") {
 #Consumer Price Index of All Items in Germany, Index 2015=100, Monthly, Not Seasonally Adjusted
 Data_1<-read_delim(file.choose(),";", escape_double = FALSE, trim_ws = TRUE)
 IPC_DE<-ts(data.frame(Data_1)$IPC_DE[481:724], frequency = 12, start = 2000)
-
+#Descripción de IPC
 summary(IPC_DE); kurtosis(IPC_DE)
 start(IPC_DE); end(IPC_DE)
 #Clara tendencia de la serie
 autoplot(IPC_DE,main = "IPC Alemania (enero 1960 - abril 2020)")
 monthplot(IPC_DE, col = "midnightblue")
+#Serie estacional
 descompos = stl(IPC_DE,s.window = "periodic"); autoplot(descompos)
 
-# Autocorrelación simple y parcial serie original
+# Autocorrelación simple y parcial serie original.
 grid.arrange(
   ggAcf(IPC_DE,lag.max=60,plot=T,lwd=2,xlab='',main='ACF del IPC', ylim=c(-1,1)),
   ggPacf(IPC_DE,lag.max=60,plot=T,lwd=2,xlab='',main='PACF del IPC', ylim=c(-1,1)),
   ggAcf(diff(IPC_DE),lag.max=60,plot=T,lwd=2,xlab='',main='ACF del IPC diferenciado', ylim=c(-1,1)),
   ggPacf(diff(IPC_DE),lag.max=60,plot=T,lwd=2,xlab='',main='PACF del IPC diferenciado', ylim=c(-1,1))
 )
-
-#Transformaciones
+#Es necesario diferenciar la serie.
+#Transformaciones.
 Diff<-diff(IPC_DE)
 Diff_log<- diff(log(IPC_DE))
 Diff_s<-diff(Diff_log,lag = 12,differences = 1)
@@ -165,33 +166,34 @@ Diff_s<-diff(Diff_log,lag = 12,differences = 1)
 #Al aplicar log se logra estabilizar la varianza
 grid.arrange(
   autoplot(Diff, col = "midnightblue"),
-  autoplot(Diff_log, col = "midnightblue"),
-  autoplot(Diff_s, col = "midnightblue")
+  autoplot(Diff_log, col = "midnightblue"), 
+  autoplot(Diff_s, col = "midnightblue") 
 )  
 monthplot(Diff, col = "midnightblue")
+
 # Gráfico de autocorrelación simple y parcial diff log
 #claro componente estacional cada 12 periodo
 grid.arrange(
   ggAcf(Diff,lag.max=64,plot=T,lwd=2,xlab='',main='ACF del difIPC', ylim=c(-1,1)),
   ggPacf(Diff,lag.max=64,plot=T,lwd=2,xlab='',main='PACF del difIPC', ylim=c(-1,1)),
-  ggAcf(Diff_log,lag.max=64,plot=T,lwd=2,xlab='',main='ACF del IPC diferenciado log', ylim=c(-1,1)),
+  ggAcf(Diff_log,lag.max=64,plot=T,lwd=2,xlab='',main='ACF del IPC diferenciado log', ylim=c(-1,1)), #el logaritmo no aporta mejoría a la autocorrelación de la serie
   ggPacf(Diff_log,lag.max=64,plot=T,lwd=2,xlab='',main='PACF del IPC diferenciado log', ylim=c(-1,1)),
-  ggAcf(Diff_s,lag.max=64,plot=T,lwd=2,xlab='',main='ACF del IPC diferenciado estacional', ylim=c(-1,1)),
-  ggPacf(Diff_s,lag.max=64,plot=T,lwd=2,xlab='',main='PACF del IPC diferenciado estacional', ylim=c(-1,1))
+  ggAcf(Diff_s,lag.max=64,plot=T,lwd=2,xlab='',main='ACF del IPC diferenciado estacional', ylim=c(-1,1)), #diferenciar la serie mejora la autocorrelación de la serie pero puede no ser necesario 
+  ggPacf(Diff_s,lag.max=64,plot=T,lwd=2,xlab='',main='PACF del IPC diferenciado estacional', ylim=c(-1,1)) #porque el efecto persiste, puede corregirse con un SARIMA(1,0,1)(1,0,1)[12]
 )
 
 #Pruebas de raiz unitaria
 summary(ur.df(IPC_DE,type = 'trend', selectlags = 'AIC'));interp_urdf(ur.df(IPC_DE,type = 'trend'),level = "5pct")
-summary(ur.df(IPC_DE,type = 'drift', selectlags = 'AIC'));interp_urdf(ur.df(IPC_DE,type = 'drift'),level = "5pct")
+summary(ur.df(IPC_DE,type = 'drift', selectlags = 'AIC'));interp_urdf(ur.df(IPC_DE,type = 'drift'),level = "5pct") #caminata aleatoria con deriva
 #summary(ur.df(IPC_DE,type = 'none'));interp_urdf(ur.df(IPC_DE,type = 'none'),level = "5pct")
 
 summary(ur.df(Diff,type = 'trend', selectlags = 'AIC'));interp_urdf(ur.df(Diff,type = 'trend'),level = "5pct")
-summary(ur.df(Diff,type = 'drift', selectlags = 'AIC'));interp_urdf(ur.df(Diff,type = 'drift'),level = "5pct")
+summary(ur.df(Diff,type = 'drift', selectlags = 'AIC'));interp_urdf(ur.df(Diff,type = 'drift'),level = "5pct") #caminata aleatoria con deriva
 #summary(ur.df(Diff,type = 'none', selectlags = 'AIC'));interp_urdf(ur.df(Diff,type = 'none'),level = "5pct")
 
 summary(ur.df(Diff_s,type = 'trend', selectlags = 'AIC'));interp_urdf(ur.df(Diff_s,type = 'trend'),level = "5pct")
-summary(ur.df(Diff_s,type = 'drift', selectlags = 'AIC'));interp_urdf(ur.df(Diff_s,type = 'drift'),level = "5pct")
-summary(ur.df(Diff_s,type = 'none', selectlags = 'AIC'));interp_urdf(ur.df(Diff_s,type = 'none'),level = "5pct")
+summary(ur.df(Diff_s,type = 'drift', selectlags = 'AIC'));interp_urdf(ur.df(Diff_s,type = 'drift'),level = "5pct") #caminata aleatoria con deriva
+summary(ur.df(Diff_s,type = 'none', selectlags = 'AIC'));interp_urdf(ur.df(Diff_s,type = 'none'),level = "5pct") 
 
 mar <- 3
 mma <- 3
@@ -204,26 +206,27 @@ for (i in 0:mar) {
 }
 results1
 
-sarima<-Arima(Diff,order=c(1,0,1),seasonal=list(order=c(1,0,1),period=12), include.drift=T)
-sarima1<-Arima(Diff,order=c(0,0,1),seasonal=list(order=c(1,1,1),period=12), include.drift=T)
+sarima<-Arima(Diff,order=c(1,0,1),seasonal=list(order=c(1,0,1),period=12), include.drift=T) #modelo elegido por AIC y alto BIC
+sarima1<-Arima(Diff,order=c(1,0,0),seasonal=list(order=c(1,1,1),period=12), include.drift=T)
 sarima2<-Arima(Diff,order=c(0,0,0),seasonal=list(order=c(1,0,1),period=12), include.drift=T)
 
+#Verificación de errores
 grid.arrange(
   ggAcf(residuals(sarima),lag.max=60,plot=T,lwd=2,xlab='',main='ACF de residuos SARIMA'),
   ggPacf(residuals(sarima),lag.max=60,plot=T,lwd=2,xlab='',main='PACF de residuos SARIMA')
 )
-summary(ur.df(residuals(sarima),type = 'none', selectlags = 'AIC'));interp_urdf(ur.df(residuals(arima1),type = 'none'),level = "5pct")
+summary(ur.df(residuals(sarima),type = 'none', selectlags = 'AIC'));interp_urdf(ur.df(residuals(arima1),type = 'none'),level = "5pct") #estacionarios
 
-ArchTest(residuals(sarima), lags = length(IPC_DE)/4)
+ArchTest(residuals(sarima), lags = length(IPC_DE)/4) #homoscedasticos
 Box.test(residuals(sarima),type='Box-Pierce',lag=length(IPC_DE)/4)
-checkresiduals(residuals(sarima), test = "LB")
-qqnorm(residuals(sarima)); qqline(residuals(sarima))
-shapiro.test(residuals(sarima))
+checkresiduals(sarima, test = "LB") #sin correlación serial
+qqnorm(residuals(sarima)); qqline(residuals(sarima)) 
+shapiro.test(residuals(sarima)) #Normalmente distribuidos
 jarque.bera.test(residuals(sarima))
 
 #Ajustado vs. Observado
 autoplot(cbind(Diff, fitted(sarima)), main='Estimado y observado') + scale_x_continuous(limit = c(2000, 2020))
-
+#Pronóstico
 fore1<-autoplot(forecast::forecast(sarima, level = c(95), h = 7), main='Pronóstico hasta noviembre de 2020', ylab='Cambio del IPC', xlab='')+
   scale_x_continuous(limit = c(2015, 2025))
 print(fore1)
