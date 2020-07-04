@@ -573,9 +573,9 @@ mcod_seleccion = function(max.lag){
     print( c(i, -i, AIC(mcod), BIC(mcod)) )
   }  
 }
-mcod_seleccion(max.lag=20) #el mejor es 1,-1
+mcod_seleccion(max.lag=20) #el mejor es 1,-1 por ambos criterios
 
-MCOD_12 <- dynlm(x2 ~ x1 + L(d(x1),-1:1)); summary(MCOD_12)
+MCOD_12 <- dynlm(x1 ~ x2 + L(d(x2),-1:1)); summary(MCOD_12)
 DF_MCOD12<-(ur.df(residuals(MCOD_12), type = "none", selectlags = "AIC"))
 interp_urdf(DF_MCOD12,level = "5pct") # NO HAY RAIZ UNITARIA 
 
@@ -605,7 +605,7 @@ beta_12<- coefficients(dynlm(x1 ~ x2))[2] ;beta_12
 vecm_seleccion = function(max.lagind, max.lagdep){
   for (i in 0:max.lagind) {
     for (j in 0:max.lagdep)  {
-      vecm <- dynlm(d(x1) ~  L(x1-beta_12*x2) + L(d(x2), 0:i) + L(d(x1), 0:j))
+      vecm <- dynlm(d(x1) ~  L(x1-beta_12*x2) + L(d(x1), 1:i) + L(d(x2), 0:j))
       print( c(i, j, AIC(vecm), BIC(vecm)) )
     }
   }  
@@ -614,21 +614,23 @@ vecm_seleccion(max.lagind=6, max.lagdep=6)
 
 vecm_seleccion2 = function(max.lagind, max.lagdep){
   for (i in 0:max.lagind) {
-    for (j in 0:max.lagdep)  {
-      vecm <- dynlm(d(x2) ~  L(x1-beta_12*x2)+ L(d(x2), 0:j) + L(d(x1), 0:i))
+    for (j in 1:max.lagdep)  {
+      vecm <- dynlm(d(x2) ~  L(x1-beta_12*x2,1)+ L(d(x1), 0:i) + L(d(x2), 1:j))
       print( c(i, j, AIC(vecm), BIC(vecm)) )
     }
   }  
 }
 vecm_seleccion2(max.lagind=7, max.lagdep=7)
 
-VECM_12_1 <- dynlm(d(x1) ~  L(x1-beta_12*x2) + L(d(x2), 0) + L(d(x1))) ;summary(VECM_12_1) 
+VECM_12_1 <- dynlm(d(x1) ~  L(x1-beta_12*x2) + L(d(x2), 0:1)) ; BIC(VECM_12_1)
+summary(VECM_12_1) # por criterios de información, empeora al incluir rezagos de x1
 
-VECM_12_2 <- dynlm(d(x2) ~  L(x1-beta_12*x2,1) + L(d(x2)) + L(d(x1), 0)) 
+
+VECM_12_2 <- dynlm(d(x2) ~  L(x1-beta_12*x2,1) +L(d(x1),0:4) ) ;BIC(VECM_12_2)
 summary(VECM_12_2)
 
 
-# VERIFICACIÓN DE SUPUESTOS 1
+# VERIFICACIÓN DE SUPUESTOS 1 ####
 grid.arrange(
   ggAcf(residuals(VECM_12_1),lag.max=25,plot=T,lwd=2,xlab='',main='ACF de los Residuos'),
   ggPacf(residuals(VECM_12_1),lag.max=25,plot=T,lwd=2,xlab='',main='PACF de los Residuos')
@@ -652,7 +654,8 @@ interp_urdf(raiz12_1,level = "5pct")
 
 ArchTest(residuals(VECM_12_1), lags = 250) 
 
-# VERIFICACIÓN DE SUPUESTOS 2
+
+# VERIFICACIÓN DE SUPUESTOS 2 ####
 grid.arrange(
   ggAcf(residuals (VECM_12_2),lag.max=25,plot=T,lwd=2,xlab='',main='ACF de los Residuos'),
   ggPacf(residuals(VECM_12_2),lag.max=25,plot=T,lwd=2,xlab='',main='PACF de los Residuos')
