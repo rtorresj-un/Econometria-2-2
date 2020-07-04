@@ -137,367 +137,113 @@ interp_urdf <- function(urdf, level="5pct") {
 }
 ############################################################################
 #Primer punto####
+#Consumer Price Index of All Items in Germany, Index 2015=100, Monthly, Not Seasonally Adjusted
 Data_1<-read_delim(file.choose(),";", escape_double = FALSE, trim_ws = TRUE)
-IPC_DE<-ts(data.frame(Data_1)$IPC_DE[481:length(IPC_DE)], frequency = 12, start = 2000)
+IPC_DE<-ts(data.frame(Data_1)$IPC_DE[481:724], frequency = 12, start = 2000)
 
 summary(IPC_DE); kurtosis(IPC_DE)
 start(IPC_DE); end(IPC_DE)
 #Clara tendencia de la serie
 autoplot(IPC_DE,main = "IPC Alemania (enero 1960 - abril 2020)")
 monthplot(IPC_DE, col = "midnightblue")
+descompos = stl(IPC_DE,s.window = "periodic"); autoplot(descompos)
 
 # Autocorrelación simple y parcial serie original
 grid.arrange(
-  ggAcf(IPC_DE,lag.max=64,plot=T,lwd=2,xlab='',main='ACF del IPC', ylim=c(-1,1)),
-  ggPacf(IPC_DE,lag.max=64,plot=T,lwd=2,xlab='',main='PACF del IPC', ylim=c(-1,1)),
-  ggAcf(diff(IPC_DE),lag.max=64,plot=T,lwd=2,xlab='',main='ACF del difIPC', ylim=c(-1,1)),
-  ggPacf(diff(IPC_DE),lag.max=64,plot=T,lwd=2,xlab='',main='PACF del difIPC', ylim=c(-1,1)),
-  ggAcf(Diff_s,lag.max=64,plot=T,lwd=2,xlab='',main='ACF del IPC diferenciado estacional', ylim=c(-1,1)),
-  ggPacf(Diff_s,lag.max=64,plot=T,lwd=2,xlab='',main='PACF del IPC diferenciado estacional', ylim=c(-1,1))
+  ggAcf(IPC_DE,lag.max=60,plot=T,lwd=2,xlab='',main='ACF del IPC', ylim=c(-1,1)),
+  ggPacf(IPC_DE,lag.max=60,plot=T,lwd=2,xlab='',main='PACF del IPC', ylim=c(-1,1)),
+  ggAcf(diff(IPC_DE),lag.max=60,plot=T,lwd=2,xlab='',main='ACF del IPC diferenciado', ylim=c(-1,1)),
+  ggPacf(diff(IPC_DE),lag.max=60,plot=T,lwd=2,xlab='',main='PACF del IPC diferenciado', ylim=c(-1,1))
 )
-
-# Gráfico serie en primera diferencia y diferencia de los log
-#Al aplicar log se logra estabilizar la varianza
-grid.arrange(
-  autoplot(diff(IPC_DE)),
-  autoplot(diff(log(IPC_DE)))
-)  
-monthplot(diff(log(IPC_DE)), col = "midnightblue")
-# Gráfico de autocorrelación simple y parcial diff log
-#claro componente estacional cada 12 periodo
-grid.arrange(
-  ggAcf(diff(IPC_DE),lag.max=64,plot=T,lwd=2,xlab='',main='ACF del difIPC', ylim=c(-1,1)),
-  ggPacf(diff(IPC_DE),lag.max=64,plot=T,lwd=2,xlab='',main='PACF del difIPC', ylim=c(-1,1)),
-  ggAcf(Diff_log,lag.max=64,plot=T,lwd=2,xlab='',main='ACF del IPC diferenciado log', ylim=c(-1,1)),
-  ggPacf(Diff_log,lag.max=64,plot=T,lwd=2,xlab='',main='PACF del IPC diferenciado log', ylim=c(-1,1))
-  
-)
-
-#Pruebas de raiz unitaria
-#El tau me dice si la serie tiene o no al menos una raíz unitaria. 
-#El phi3 me dice si la tendecia es significativa
-#El phi2 me indica si la deriva es significativa
-summary(ur.df(IPC_DE,type = 'trend', selectlags = 'AIC'));interp_urdf(ur.df(IPC_DE,type = 'trend'),level = "5pct")
-summary(ur.df(IPC_DE,type = 'drift', selectlags = 'AIC'));interp_urdf(ur.df(IPC_DE,type = 'drift'),level = "5pct")
-#summary(ur.df(IPC_DE,type = 'none'));interp_urdf(ur.df(IPC_DE,type = 'none'),level = "5pct")
 
 #Transformaciones
 Diff<-diff(IPC_DE)
 Diff_log<- diff(log(IPC_DE))
+Diff_s<-diff(Diff_log,lag = 12,differences = 1)
+
+# Gráfico serie en primera diferencia y diferencia de los log
+#Al aplicar log se logra estabilizar la varianza
+grid.arrange(
+  autoplot(Diff, col = "midnightblue"),
+  autoplot(Diff_log, col = "midnightblue"),
+  autoplot(Diff_s, col = "midnightblue")
+)  
+monthplot(Diff, col = "midnightblue")
+# Gráfico de autocorrelación simple y parcial diff log
+#claro componente estacional cada 12 periodo
+grid.arrange(
+  ggAcf(Diff,lag.max=64,plot=T,lwd=2,xlab='',main='ACF del difIPC', ylim=c(-1,1)),
+  ggPacf(Diff,lag.max=64,plot=T,lwd=2,xlab='',main='PACF del difIPC', ylim=c(-1,1)),
+  ggAcf(Diff_log,lag.max=64,plot=T,lwd=2,xlab='',main='ACF del IPC diferenciado log', ylim=c(-1,1)),
+  ggPacf(Diff_log,lag.max=64,plot=T,lwd=2,xlab='',main='PACF del IPC diferenciado log', ylim=c(-1,1)),
+  ggAcf(Diff_s,lag.max=64,plot=T,lwd=2,xlab='',main='ACF del IPC diferenciado estacional', ylim=c(-1,1)),
+  ggPacf(Diff_s,lag.max=64,plot=T,lwd=2,xlab='',main='PACF del IPC diferenciado estacional', ylim=c(-1,1))
+)
+
+#Pruebas de raiz unitaria
+summary(ur.df(IPC_DE,type = 'trend', selectlags = 'AIC'));interp_urdf(ur.df(IPC_DE,type = 'trend'),level = "5pct")
+summary(ur.df(IPC_DE,type = 'drift', selectlags = 'AIC'));interp_urdf(ur.df(IPC_DE,type = 'drift'),level = "5pct")
+#summary(ur.df(IPC_DE,type = 'none'));interp_urdf(ur.df(IPC_DE,type = 'none'),level = "5pct")
 
 summary(ur.df(Diff,type = 'trend', selectlags = 'AIC'));interp_urdf(ur.df(Diff,type = 'trend'),level = "5pct")
 summary(ur.df(Diff,type = 'drift', selectlags = 'AIC'));interp_urdf(ur.df(Diff,type = 'drift'),level = "5pct")
 #summary(ur.df(Diff,type = 'none', selectlags = 'AIC'));interp_urdf(ur.df(Diff,type = 'none'),level = "5pct")
 
-
-#Diferencia estacional de la serie anterior 
-Diff_s<-diff(Diff_log,lag = 12,differences = 1)
-autoplot(Diff_s)
-
-# El comportamiento estacional se mantiene en los gráficos de autocorrelación
-
-grid.arrange(
-  ggAcf(Diff_s,lag.max=64,plot=T,lwd=2,xlab='',main='ACF del IPC diferenciado estacional'),
-  ggPacf(Diff_s,lag.max=64,plot=T,lwd=2,xlab='',main='PACF del IPC diferenciado estacional')
-)
-
 summary(ur.df(Diff_s,type = 'trend', selectlags = 'AIC'));interp_urdf(ur.df(Diff_s,type = 'trend'),level = "5pct")
 summary(ur.df(Diff_s,type = 'drift', selectlags = 'AIC'));interp_urdf(ur.df(Diff_s,type = 'drift'),level = "5pct")
 summary(ur.df(Diff_s,type = 'none', selectlags = 'AIC'));interp_urdf(ur.df(Diff_s,type = 'none'),level = "5pct")
 
-IPC_x11<-seas(diff(log(IPC_DE)),transform.function="none",x11="")
-plot(IPC_x11)
-IPC_SeasAdj<-seasadj(IPC_x11)
-autoplot(IPC_SeasAdj)
-autoplot(stl(diff(log(IPC_DE)), s.window = 'periodic')$time.series[,2])
-
-arima<-auto.arima(Diff)
-arima1<-arima(diff(log(IPC_DE)),order=c(1,0,0),seasonal=list(order=c(0,1,1),period=12), include.mean=T)
-arima2<-arima(diff(log(IPC_DE)),order=c(0,0,1),seasonal=list(order=c(0,1,1),period=12), include.mean=T)
-
-arima3<-Arima(Diff,order=c(1,0,1),seasonal=list(order=c(1,0,1),period=12), include.drift=T)
-
-arima4<-arima(diff(log(IPC_DE)),order=c(0,0,2),seasonal=list(order=c(0,1,1),period=12), include.mean=T)
-
-AR=3; MA=3
-arma_seleccion = function(AR.m, MA.m){
-  for (i in 0:AR) {
-    for (j in 0:MA)  {
-      fitp <- arima(Diff, order = c(i, 0, j), seasonal=list(order=c(1,0,1),period=12))
-      print( c(i, j, AIC(fitp), BIC(fitp)) )
-    }
+mar <- 3
+mma <- 3
+results1 <- c("p","q","AIC","BIC")
+for (i in 0:mar) {
+  for (j in 0:mma)  {
+    fitp <- Arima(Diff, order = c(i, 0, j), seasonal=list(order=c(1,0,1),period=12), include.drift=T)
+    results1 <- rbind(results1,as.numeric(c(i, j, AIC(fitp), BIC(fitp)))) 
   }
 }
-arma_seleccion(AR.m, MA.m)
+results1
 
-autoplot(cbind(Diff, fitted(arima3))) + scale_x_continuous(limit = c(2000, 2025))
-
-hist(residuals(arima3))
-qqnorm(residuals(arima3))
-qqline(residuals(arima3))
-shapiro.test(residuals(arima3))
+sarima<-Arima(Diff,order=c(1,0,1),seasonal=list(order=c(1,0,1),period=12), include.drift=T)
+sarima1<-Arima(Diff,order=c(0,0,1),seasonal=list(order=c(1,1,1),period=12), include.drift=T)
+sarima2<-Arima(Diff,order=c(0,0,0),seasonal=list(order=c(1,0,1),period=12), include.drift=T)
 
 grid.arrange(
-  ggAcf(residuals(arima3),lag.max=60,plot=T,lwd=2,xlab='',main='ACF de residuos SARIMA'),
-  ggPacf(residuals(arima3),lag.max=60,plot=T,lwd=2,xlab='',main='PACF de residuos SARIMA')
+  ggAcf(residuals(sarima),lag.max=60,plot=T,lwd=2,xlab='',main='ACF de residuos SARIMA'),
+  ggPacf(residuals(sarima),lag.max=60,plot=T,lwd=2,xlab='',main='PACF de residuos SARIMA')
 )
+summary(ur.df(residuals(sarima),type = 'none', selectlags = 'AIC'));interp_urdf(ur.df(residuals(arima1),type = 'none'),level = "5pct")
 
-summary(ur.df(residuals(arima3),type = 'trend', selectlags = 'AIC'))
-summary(ur.df(residuals(arima3),type = 'drift', selectlags = 'AIC'))
-summary(ur.df(residuals(arima3),type = 'none', selectlags = 'AIC'));interp_urdf(ur.df(residuals(arima3),type = 'none'),level = "5pct")
+ArchTest(residuals(sarima), lags = length(IPC_DE)/4)
+Box.test(residuals(sarima),type='Box-Pierce',lag=length(IPC_DE)/4)
+checkresiduals(residuals(sarima), test = "LB")
+qqnorm(residuals(sarima)); qqline(residuals(sarima))
+shapiro.test(residuals(sarima))
+jarque.bera.test(residuals(sarima))
 
-Box.test(residuals(arima3),type='Ljung-Box',lag=length(IPC_DE)/4)
-Box.test(residuals(arima3),type='Box-Pierce',lag=length(IPC_DE)/4)
-checkresiduals(arima3, test = "BG")
-ArchTest(residuals(arima3), lags = length(IPC_DE)/4)
+#Ajustado vs. Observado
+autoplot(cbind(Diff, fitted(sarima)), main='Estimado y observado') + scale_x_continuous(limit = c(2000, 2020))
 
-fore1<-autoplot(forecast::forecast(arima3, level = c(95), h = 7))+
-  scale_x_continuous(limit = c(2010, 2025))#+
-  #scale_y_continuous(limit = c(4.5, 4.7))
+fore1<-autoplot(forecast::forecast(sarima, level = c(95), h = 7), main='Pronóstico hasta noviembre de 2020', ylab='Cambio del IPC', xlab='')+
+  scale_x_continuous(limit = c(2015, 2025))
 print(fore1)
 
-library(tsoutliers)
-library(expsmooth)
-library(fma)
-
-## Identify Outliers
-
-outlier.1 <- tsoutliers::tso(Diff,types = c("AO","LS","TC"),maxit.iloop=10, tsmethod = "arima", args.tsmethod = list(order = c(1, 0, 1), seasonal = list(order = c(1, 0, 1))))
-outlier.1
-plot(outlier.1)
-
-n <- length(Diff)
+### Identify Outliers
+#outlier.1 <- tsoutliers::tso(Diff,types = c("AO","LS","TC"),maxit.iloop=10, tsmethod = "auto.arima")
+#outlier.1
+#plot(outlier.1)
+#n <- length(Diff)
 
 ## Create Outliers Regressors for ARIMAX
 ## Two type of outliers Level Shift (LS) and Temprory Change (TC)
 
-mo.ls <- outliers("LS", 12)
-ls <- outliers.effects(mo.ls, n)
-
-mo.tc <- outliers("TC", 20)
-tc <- outliers.effects(mo.tc, n)
-
-xreg.outliers <- cbind(ls,tc)
-
+#mo.ao <- outliers("AO", c(21,36,351))
+#ao <- outliers.effects(mo.ao, n)
+#xreg.outliers1 <- cbind(ao)
 
 ## Create Arimax using Outliers as regressor variables.
-
-arima.model <- Arima(Diff,order=c(1,0,1),seasonal=list(order=c(1,0,1),period=12), include.drift=T,xreg=xreg.outliers)
-arima.model
-
-# intentos ##########################
-
-# serie M2 #######
-
-M2SL <- read_excel("M2SL.xls")
-View(M2SL)
-M2<-ts(data.frame(M2SL)$M2SL, frequency = 12, start = 1960)
-autoplot(M2)
-autoplot(log(M2))
-autoplot(diff(log(M2)))
-autoplot(diff(M2))
-plot(stl(M2,s.window = "periodic"))
-
-#Hacer diagrama de caja por trimestre
-(ciclo=cycle(M2))     #Ver el ciclo de la serie
-boxplot(M2~ciclo)
-
-
-#Descomponer la serie (componente tendencial, estacional y aleatorio)
-descompos = stl(M2,s.window = "periodic")
-autoplot(descompos)
-
-
-#fac no decae rapidamente, indicios de tendencia 
-grid.arrange(
-  ggAcf(M2,lag.max=60,plot=T,lwd=2,xlab='',main='ACF del M2'),
-  ggPacf(M2,lag.max=60,plot=T,lwd=2,xlab='',main='PACF del M2')
-)
-
-# Vamos a aplicar el test de raíz unitaria Dickey-Fuller, el cual nos dice si 
-# una serie tiene raíz unitaria o no. La hipótesis nula es que la serie tiene al menos una 
-# raíz unitaria (no es estacionaria), mientras la hipótesis alternativa dice que es estacionaria. 
-
-summary(ur.df(M2,type = 'trend'));interp_urdf(ur.df(M2,type = 'trend'),level = "5pct")
-#summary(ur.df(M2,type = 'drift'));interp_urdf(ur.df(M2,type = 'drift'),level = "5pct")
-#summary(ur.df(M2,type = 'none'));interp_urdf(ur.df(M2,type = 'none'),level = "5pct")
-
-Diff_log_m2<-diff(log(M2))
-grid.arrange(
-  autoplot(diff(M2)),
-  autoplot(diff(log(M2)))
-)  
-
-# fac y facp de la serie transformada 
-grid.arrange(
-  ggAcf(Diff_log_m2,lag.max=60,plot=T,lwd=2,xlab='',main='ACF del dif logM2', ylim=c(-1,1)),
-  ggPacf(Diff_log_m2,lag.max=60,plot=T,lwd=2,xlab='',main='PACF del dif logM2', ylim=c(-1,1)),
-  ggAcf(diff(M2),lag.max=60,plot=T,lwd=2,xlab='',main='ACF del difM2', ylim=c(-1,1)),
-  ggPacf(diff(M2),lag.max=60,plot=T,lwd=2,xlab='',main='PACF del difM2', ylim=c(-1,1))
-)
-
-summary(ur.df(Diff_log_m2,type = 'trend'));interp_urdf(ur.df(Diff_log_m2,type = 'trend'),level = "5pct")
-summary(ur.df(Diff_log_m2,type = 'drift'));interp_urdf(ur.df(Diff_log_m2,type = 'drift'),level = "5pct")
-summary(ur.df(Diff_log_m2,type = 'none'));interp_urdf(ur.df(Diff_log_m2,type = 'none'),level = "5pct")
-
-mar <- 3
-mma <- 3
-results <- c("p","q","AIC","SBC")
-for (i in 0:mar) {
-  for (j in 0:mma)  {
-    fitp <- arima(Diff_log_m2, order = c(i, 0, j), include.mean = TRUE)
-    results <- rbind(results,as.numeric(c(i, j, AIC(fitp), BIC(fitp)))) 
-  }
-}
-
-results
-# por criterios de info 
-#ARIMA (1,0,3) de serie lm
-mod1<-arima(x = Diff_log_m2,order = c(1,0,3))
-
-#ARIMA (2,1,4) de serie lm
-mod2<-arima(x = Diff_log_m2,order = c(1,0,4))
-
-#ARIMA (4,1,2) de serie lm
-mod3<-arima(x = Diff_log_m2,order = c(3,0,4))
-
-#ARIMA (4,1,4) de serie lm
-mod4<-Arima(y = Diff_log_m2,order = c(1,0,1), xreg = cbind(da))
-
-#ARIMA (4,1,4) de serie lm
-mod5<-arima(x = Diff_log_m2,order = c(3,0,2))
-
-coeftest(mod2)  
-#significativos mod 2,4,5
-
-auto.arima(Diff_log_m2)
-
-autoplot(cbind(Diff_log_m2, fitted(mod4)))
-
-# Validacion del modelo
-layout(matrix(1:2, ncol = 2, nrow = 1))
-plot(mod5$resid)
-acf(mod5$resid, ylim=c(-1,1), main = "FAC de Residuales")
-
-for (i in 1:24) {print( Box.test(resid(mod5), lag=i,  type="Ljung") )}
-
-normalTest(mod5$resid, method="jb")
-jarque.bera.test(mod5$residuals)
-hist(mod5$residuals)
-qqnorm(mod4$residuals)
-
-Diff_log_m2_t<-Diff_log_m2
-which.max(Diff_log_m2_t)
-Diff_log_m2_t[735]<- NA
-which.max(Diff_log_m2_t)
-Diff_log_m2_t[736]<- NA
-which.max(Diff_log_m2_t)
-Diff_log_m2_t[734]<- NA
-which.max(Diff_log_m2_t)
-Diff_log_m2_t[288]<- NA
-which.max(Diff_log_m2_t)
-Diff_log_m2_t[631]<- NA
-which.max(Diff_log_m2_t)
-Diff_log_m2_t[599]<- NA
-which.max(Diff_log_m2_t)
-Diff_log_m2_t[512]<- NA
-which.min(Diff_log_m2_t)
-Diff_log_m2_t[133]<- NA
-which.min(Diff_log_m2_t)
-Diff_log_m2_t[536]<- NA
-which.min(Diff_log_m2_t)
-Diff_log_m2_t[612]<- NA
-
-da <- ts(rep(0,length(Diff_log_m2)), frequency = 12, start = 1960)
-da[735]<-1;da[736]<-1;da[734]<-1
-db <- ts(rep(0,length(Diff_log_m2)), frequency = 12, start = 1960)
-db[288]<-1;db[631]<-1;db[599]<-1; db[512]<-1; db[133]<-1; db[536]<-1; db[612]<-1
-
-# parentesis
-which.max(mod4$resid)
-da <- rep(0,length(Diff_log_m2))
-da
-da[735] <- 1
-da
-Modelexp1 <- arima(Diff_log_m2, order =c(1,0,2), xreg = da)
-for (i in 1:24) {print( Box.test(resid(Modelexp1), lag=i,  type="Ljung") )}
-
-
-#PRONOSTICO####
-fore<-autoplot(forecast::forecast(fitted(mod4), level = c(95), h = 7))+
-  scale_x_continuous(limit = c(2010, 2025))#+
-#scale_y_continuous(limit = c(4.5, 4.7))
-print(fore)
-
-
-#REAL vs AJUSTADO
-ts.plot(Diff_log_m2,(pred$fitted)[5,10],col=c("black","red"))
-
-autoplot(forecast(auto.arima(Diff_log_m2),h = 12))
-
-
-Des_ger
-names(Des_ger)
-
-# PIB Noruega / Ahora es desempleo alemania gg ####
-Pib_nor<- ts(data.frame(Des_ger)$LMUNRRTTDEM156S, frequency =12 , start = 1969)
-Pib_nor
-autoplot(Pib_nor)
-autoplot(log(Pib_nor))
-autoplot(diff(log(Pib_nor)))
-autoplot(diff(Pib_nor))
-plot(stl(Pib_nor,s.window = "periodic"))
-
-#Hacer diagrama de caja por trimestre
-(ciclo=cycle(Pib_nor))     #Ver el ciclo de la serie
-boxplot(Pib_nor~ciclo)
-
-acf(Pib_nor)
-pacf(Pib_nor)
-Diff_pib<-diff((Pib_nor))
-
-acf(diff(Pib_nor))
-pacf(diff(Pib_nor))
-# Vamos a aplicar el test de raíz unitaria Dickey-Fuller, el cual nos dice si 
-# una serie tiene raíz unitaria o no. La hipótesis nula es que la serie tiene al menos una 
-# raíz unitaria (no es estacionaria), mientras la hipótesis alternativa dice que es estacionaria. 
-
-DF.Test = ur.df(Diff_pib, type="none", selectlags = "AIC")
-summary(DF.Test) #Rechazo la hipótesis nula, asi que Diff_log_m2 es estacionaria. 
-
-# fac y facp de la serie transformada 
-grid.arrange(
-  ggAcf(Diff_pib,lag.max=30,plot=T,lwd=2,xlab='',main='ACF del IPC'),
-  ggPacf(Diff_pib,lag.max=30,plot=T,lwd=2,xlab='',main='PACF del IPC')
-)
-# Seleccion de modelo ####
-mar <- 4
-mma <- 4
-results <- c("p","q","AIC","SBC")
-for (i in 0:mar) {
-  for (j in 0:mma)  {
-    fitp <- arima(Diff_pib, order = c(i, 0, j), include.mean = TRUE)
-    results <- rbind(results,as.numeric(c(i, j, AIC(fitp), BIC(fitp)))) 
-  }
-}
-
-results
-#ARIMA (2,1,4) de serie lm
-mod1<-arima(x = Diff_pib,order = c(1,0,1),include.mean = F)
-mod1.1<-arima(x = Diff_pib,order = c(1,0,1),include.mean = TRUE)
-#ARIMA (4,1,2) de serie lm
-mod2<-arima(x = Diff_pib,order = c(2,0,1),include.mean = F)
-mod2.1<-arima(x = Diff_pib,order = c(2,0,1),include.mean = TRUE)
-
-coeftest(mod1)  
-coeftest(mod2.1)  
-
-jarqueberaTest(mod1.1$residuals)
-plot(mod1$residuals)
-qqnorm(mod1.1$residuals)
-qqline(mod1.1$residuals)
-
-
+#sarimax <- Arima(Diff,order=c(1,0,1),seasonal=list(order=c(1,0,1),period=12), include.drift=T,xreg=xreg.outliers1)
+#sarimax
 
 #Segundo punto####
 Data_UR<-read.csv(file.choose())
@@ -992,7 +738,7 @@ vecm_seleccion2 = function(max.lagind, max.lagdep){
 }
 vecm_seleccion2(max.lagind=4, max.lagdep=4)#El mejor es con 1 y 3 rezagos en independiente y dependiente
 
-VECM_451 <- dynlm(d(x4) ~  L(x4-beta_45*x5) + L(d(x4), 1:4) + L(d(x5),1:2)) ;summary(VECM_451)
+VECM_451 <- dynlm(d(x4) ~  L(x4-beta_45*x5) + L(d(x4), 1) + L(d(x5),1)) ;summary(VECM_451)
 VECM_452 <- dynlm(d(x5) ~  L(x4-beta_45*x5)+ L(d(x5), 1:3) + L(d(x4),1)) ;summary(VECM_452) 
 
 # Usando errores estandar robustos
