@@ -1,6 +1,6 @@
 #Taller 3 - Econmetría 2####
 #Raul Torres, Juanita Cortes, David Orozco
-library(readr); library(urca); library(tseries); library(gridExtra); library(ggfortify); library(sandwich)
+library(readr); library(urca); library(tseries); library(gridExtra); library(ggfortify); library(sandwich); library(lmtest)
 library(forecast); library(seasonal); library(aTSA); library(readxl); library(timeDate); library(FinTS); library(dynlm)
 ############################################################################
 # This R function helps to interpret the output of the urca::ur.df function.
@@ -139,12 +139,15 @@ interp_urdf <- function(urdf, level="5pct") {
 #Primer punto####
 #Consumer Price Index of All Items in Germany, Index 2015=100, Monthly, Not Seasonally Adjusted
 Data_1<-read_delim(file.choose(),";", escape_double = FALSE, trim_ws = TRUE)
-IPC_DE<-ts(data.frame(Data_1)$IPC_DE[481:724], frequency = 12, start = 2000)
+attach(Data_1)
+Date1<-as.Date(Date, format = '%d/%m/%Y')
+IPC_DE<-ts(data.frame(Data_1)$IPC_DE, frequency = 12, start = 2000)
 #Descripción de IPC
 summary(IPC_DE); kurtosis(IPC_DE)
 start(IPC_DE); end(IPC_DE)
 #Clara tendencia de la serie
 autoplot(IPC_DE,main = "IPC Alemania (enero 1960 - abril 2020)")
+ggplot(Data_1, aes(Date1, IPC_DE)) + geom_line(color='midnightblue')
 monthplot(IPC_DE, col = "midnightblue")
 #Serie estacional
 descompos = stl(IPC_DE,s.window = "periodic"); autoplot(descompos)
@@ -630,7 +633,7 @@ VECM_12_2 <- dynlm(d(x2) ~  L(x1-beta_12*x2,1) +L(d(x1),0:4) ) ;BIC(VECM_12_2)
 summary(VECM_12_2)
 
 
-# VERIFICACIÓN DE SUPUESTOS 1 ####
+# VERIFICACIÓN DE SUPUESTOS 1 
 grid.arrange(
   ggAcf(residuals(VECM_12_1),lag.max=25,plot=T,lwd=2,xlab='',main='ACF de los Residuos'),
   ggPacf(residuals(VECM_12_1),lag.max=25,plot=T,lwd=2,xlab='',main='PACF de los Residuos')
@@ -655,7 +658,7 @@ interp_urdf(raiz12_1,level = "5pct")
 ArchTest(residuals(VECM_12_1), lags = 250) 
 
 
-# VERIFICACIÓN DE SUPUESTOS 2 ####
+# VERIFICACIÓN DE SUPUESTOS 2
 grid.arrange(
   ggAcf(residuals (VECM_12_2),lag.max=25,plot=T,lwd=2,xlab='',main='ACF de los Residuos'),
   ggPacf(residuals(VECM_12_2),lag.max=25,plot=T,lwd=2,xlab='',main='PACF de los Residuos')
@@ -714,7 +717,7 @@ grid.arrange(
 # Usando errores estandar robustos
 coeftest(MCOD_45, vcov. = vcovHC(MCOD_45))
 #Verificando residuos
-summary(ur.df(diff(residuals(MCOD_45)), type="none", selectlags = "AIC"))
+summary(ur.df(residuals(MCOD_45), type="none", selectlags = "AIC"))
 checkresiduals(MCOD_45, test = 'BG', lag = 250) #Se rechaza no correlación serial.
 checkresiduals(MCOD_45, test = 'LB', lag = 250, plot = F) #Se rechaza no correlación serial.
 jarque.bera.test(residuals(MCOD_45)) #No normalidad de los residuos.
@@ -764,4 +767,81 @@ ArchTest(residuals(VECM_452), lags = 250)
 #Se cumplen supuestos de normalidad, homoscedasticidad y autocorrelación: errores estacionarios.
 detach(Data_coin)
 #Cuarto punto####
+UK<-data.frame(UK_4 <- read_delim(file.choose(),";", escape_double = FALSE, trim_ws = TRUE))
+attach(UK)
+i_3m<-ts(UK$i_3m, start=2000, frequency = 12)
+i_1y<-ts(UK$i_1y, start=2000, frequency = 12)
+i_5y<-ts(UK$i_5y, start=2000, frequency = 12)
+Date_4<-as.Date(Date4, format = '%d/%m/%y')
+ggplot(UK, aes(Date_4, i_3m)) + geom_line(color='midnightblue') + xlab('')
+ggplot(UK, aes(Date_4, i_1y)) + geom_line(color='midnightblue') + xlab('')
+ggplot(UK, aes(Date_4, i_5y)) + geom_line(color='midnightblue') + xlab('')
 
+summary(ur.df(i_1y,type = 'trend', selectlags = 'AIC'))
+summary(ur.df(i_1y,type = 'drift', selectlags = 'AIC'))
+summary(ur.df(i_1y,type = 'none', selectlags = 'AIC'))
+
+summary(ur.df(i_3m,type = 'trend', selectlags = 'AIC'))
+summary(ur.df(i_3m,type = 'drift', selectlags = 'AIC'))
+summary(ur.df(i_3m,type = 'none', selectlags = 'AIC'))
+
+acf(i_3m, lag.max = 60)
+pacf(i_3m, lag.max = 60)
+acf(i_1y, lag.max = 60)
+pacf(i_1y, lag.max = 60)
+
+summary(ur.pp(i_3m,model=c("trend"), type=c("Z-tau")))
+summary(ur.pp(i_1y,model=c("trend"), type=c("Z-tau")))
+summary(ur.pp(diff(i_3m),model=c("constant"), type=c("Z-tau")))
+summary(ur.pp(diff(i_1y),model=c("constant"), type=c("Z-tau")))
+
+summary(ur.kpss(i_3m, type=c("tau")))#ho: estacionariedad
+summary(ur.kpss(i_1y, type=c("tau")))#ho: estacionariedad
+summary(ur.kpss(diff(i_3m), type=c("tau")))#ho: estacionariedad
+summary(ur.kpss(diff(i_1y), type=c("tau")))#ho: estacionariedad
+
+coint.test(i_1y, i_3m, nlag = 1) #los residuos del polinomio no tienen raíz unitaria
+#son cointegradas de orden 1
+
+UK_MCOD1 <- dynlm(i_1y ~ i_3m + L(d(i_3m),-1:1)); summary(UK_MCOD1)
+
+# MCOD 
+mcod_seleccion4 = function(max.lag){
+  for (i in 1:max.lag) {
+    mcod <- dynlm(i_1y ~ i_3m + L(d(i_3m),-i:i))
+    print( c(i, -i, AIC(mcod), BIC(mcod)) )
+  }  
+}
+mcod_seleccion4(max.lag=5) #según criterio de BIC es mejor -1,1 y por AIC es mejor -2,2
+MCOD_UK<-dynlm(i_1y ~ i_3m + L(d(i_3m),-2:2))
+coeftest(MCOD_UK, vcov.=vcovHC(MCOD_UK))
+
+ts.plot(i_1y-i_3m, residuals(MCOD_UK), col=c("brown", "midnightblue"))
+residplot<-data.frame(time=Date_4[3:246], c(i_1y-i_3m)[3:246], residuals(MCOD_UK))
+
+residMCOD<-ggplot(residplot, colour=factor(names(residplot))) + geom_line(aes(x = time, y = c.i_1y...i_3m..3.246.), color="brown") +
+            geom_line(aes(x = time, y = residuals.MCOD_UK.), color="midnightblue") 
+residMCOD<-residMCOD + xlab('') + ylab('')+
+            ggtitle('Modelo vs residuos de MCOD') +
+            scale_color_manual(labels = c("i_1y-i_3m","residuals(MCOD_UK)")) +
+            theme(legend.position="bottom")
+residMCOD
+
+summary(ur.df(residuals(MCOD_UK), type = "none", selectlags = "AIC")) #residuales estacionarios
+Box.test(residuals(MCOD_UK),lag=60, type = "Box-Pierce") #rechazo H0, no se cumple el supuesto. 
+Box.test(residuals(MCOD_UK),type='Box-Pierce',lag=20) #rechazo H0, no se cumple el supuesto. 
+Box.test(residuals(MCOD_UK),type='Box-Pierce',lag=10) #rechazo H0,  no se cumple el supuesto.
+
+# Test  Ljung-Box para autocorrelaci?n en los residuales.
+Box.test(residuals(MCOD_UK),lag=60, type = "Ljung-Box") #rechazo H0, no se cumple el supuesto.
+Box.test(residuals(MCOD_UK),type='Ljung-Box',lag=20) #rechazo H0, no se cumple el supuesto.
+Box.test(residuals(MCOD_UK),type='Ljung-Box',lag=10) #rechazo H0, no se cumple el supuesto.
+
+checkresiduals(residuals(MCOD_UK), test = 'LB', lag = 250) #Se rechaza no correlación serial.
+checkresiduals(MCOD_UK, test = 'LB', lag = 250, plot = F) #Se rechaza no correlación serial.
+jarque.bera.test(residuals(MCOD_UK)) #No normalidad de los residuos.
+ArchTest(residuals(MCOD_UK),lags = 25) #Se rechaza homoscedasticidad.
+
+#Corrección de errores
+
+lm(i_1y~i_3m)
