@@ -1,7 +1,7 @@
 #Taller 3 - Econmetría 2####
 #Raul Torres, Juanita Cortes, David Orozco
 library(readr); library(urca); library(tseries); library(gridExtra); library(ggfortify); library(sandwich); library(lmtest)
-library(forecast); library(seasonal); library(aTSA); library(readxl); library(timeDate); library(FinTS); library(dynlm)
+library(forecast); library(seasonal); library(aTSA); library(readxl); library(timeDate); library(FinTS); library(dynlm); library(tidyverse)
 ############################################################################
 # This R function helps to interpret the output of the urca::ur.df function.
 interp_urdf <- function(urdf, level="5pct") {
@@ -528,26 +528,22 @@ interp_urdf(c_adf.none_diffx5,level = "5pct")
 #### Todas las series son integradas de orden 1 
 
 #Prueba de cointegración; ninguna serie presenta tendencia clara, en la prueba no se incluye tendencia lineal.
-ifelse(coint.test(x1, x2, nlag = 1, output = F)["type 1",'EG']<=-3.35, 
-       yes = 'Hay evidencia de cointegración al 5%',no = 'No hay evidencia de cointegración al 5%')
-ifelse(coint.test(x1, x3, nlag = 1, output = F)["type 1",'EG']<=-3.35, 
-       yes = 'Hay evidencia de cointegración al 5%',no = 'No hay evidencia de cointegración al 5%')
-ifelse(coint.test(x1, x4, nlag = 1, output = F)["type 1",'EG']<=-3.35, 
-       yes = 'Hay evidencia de cointegración al 5%',no = 'No hay evidencia de cointegración al 5%')
-ifelse(coint.test(x1, x5, nlag = 1, output = F)["type 1",'EG']<=-3.35, 
-       yes = 'Hay evidencia de cointegración al 5%',no = 'No hay evidencia de cointegración al 5%')
-ifelse(coint.test(x2, x3, nlag = 1, output = F)["type 1",'EG']<=-3.35, 
-       yes = 'Hay evidencia de cointegración al 5%',no = 'No hay evidencia de cointegración al 5%')
-ifelse(coint.test(x2, x4, nlag = 1, output = F)["type 1",'EG']<=-3.35, 
-       yes = 'Hay evidencia de cointegración al 5%',no = 'No hay evidencia de cointegración al 5%')
-ifelse(coint.test(x2, x5, nlag = 1, output = F)["type 1",'EG']<=-3.35, 
-       yes = 'Hay evidencia de cointegración al 5%',no = 'No hay evidencia de cointegración al 5%')
-ifelse(coint.test(x3, x4, nlag = 1, output = F)["type 1",'EG']<=-3.35, 
-       yes = 'Hay evidencia de cointegración al 5%',no = 'No hay evidencia de cointegración al 5%')
-ifelse(coint.test(x3, x5, nlag = 1, output = F)["type 1",'EG']<=-3.35, 
-       yes = 'Hay evidencia de cointegración al 5%',no = 'No hay evidencia de cointegración al 5%')
-ifelse(coint.test(x4, x5, nlag = 1, output = F)["type 1",'EG']<=-3.35, 
-       yes = 'Hay evidencia de cointegración al 5%',no = 'No hay evidencia de cointegración al 5%')
+cointev<-function(serie1, serie2, table.c, orden){
+  ifelse(coint.test(serie1, serie2, nlag = orden, output = F)["type 1",'EG']<=-table.c, 
+         yes = result<-list(coint.test(serie1, serie2, nlag = 1, output = F)["type 1",'EG'],'Hay evidencia de cointegración al 5%'),
+         no = result<-list(coint.test(serie1, serie2, nlag = 1, output = F)["type 1",'EG'],'No hay evidencia de cointegración al 5%'))
+  print(result)
+}
+cointev(x1,x2, orden=1,table.c=3.35)
+cointev(x1,x3, orden=1,table.c=3.35)
+cointev(x1,x4, orden=1,table.c=3.35)
+cointev(x1,x5, orden=1,table.c=3.35)
+cointev(x2,x3, orden=1,table.c=3.35)
+cointev(x2,x4, orden=1,table.c=3.35)
+cointev(x2,x5, orden=1,table.c=3.35)
+cointev(x3,x4, orden=1,table.c=3.35)
+cointev(x3,x5, orden=1,table.c=3.35)
+cointev(x4,x5, orden=1,table.c=3.35)
 
 #Evidencia de cointegracion entre x1-x2 y x4-x5
 # Metodología engle granger x1-x2
@@ -730,7 +726,7 @@ beta_45<- coefficients(dynlm(x4 ~ x5))[2]
 vecm_seleccion1 = function(max.lagind, max.lagdep){
   for (i in 0:max.lagind) {
     for (j in 0:max.lagdep)  {
-    vecm <- dynlm(d(x4) ~  L(x4-beta_45*x5,1) + L(d(x5), 0:i) + L(d(x4), 0:j))
+    vecm <- dynlm(d(x4) ~  L(x4-beta_45*x5,1) + L(d(x5), 0:i) + L(d(x4), 1:j))
     print( c(i, j, AIC(vecm), BIC(vecm)) )
     }
   }  
@@ -740,7 +736,7 @@ vecm_seleccion1(max.lagind=4, max.lagdep=4) #El mejor es con 1 y 1 rezagos en in
 vecm_seleccion2 = function(max.lagind, max.lagdep){
   for (i in 0:max.lagind) {
     for (j in 0:max.lagdep)  {
-      vecm <- dynlm(d(x5) ~  L(x4-beta_45*x5,1)+ L(d(x5), 0:j) + L(d(x4), 0:i))
+      vecm <- dynlm(d(x5) ~  L(x4-beta_45*x5,1)+ L(d(x5), 1:j) + L(d(x4), 0:i))
       print( c(i, j, AIC(vecm), BIC(vecm)) )
     }
   }  
@@ -768,27 +764,28 @@ ArchTest(residuals(VECM_452), lags = 250)
 detach(Data_coin)
 #Cuarto punto####
 UK<-data.frame(UK_4 <- read_delim(file.choose(),";", escape_double = FALSE, trim_ws = TRUE))
-attach(UK)
 i_3m<-ts(UK$i_3m, start=2000, frequency = 12)
 i_1y<-ts(UK$i_1y, start=2000, frequency = 12)
 i_5y<-ts(UK$i_5y, start=2000, frequency = 12)
-Date_4<-as.Date(Date4, format = '%d/%m/%y')
+Date_4<-as.Date(UK$Date4, format = '%d/%m/%y')
 ggplot(UK, aes(Date_4, i_3m)) + geom_line(color='midnightblue') + xlab('')
 ggplot(UK, aes(Date_4, i_1y)) + geom_line(color='midnightblue') + xlab('')
 ggplot(UK, aes(Date_4, i_5y)) + geom_line(color='midnightblue') + xlab('')
 
-summary(ur.df(i_1y,type = 'trend', selectlags = 'AIC'))
-summary(ur.df(i_1y,type = 'drift', selectlags = 'AIC'))
-summary(ur.df(i_1y,type = 'none', selectlags = 'AIC'))
+grid.arrange(
+  ggAcf(i_3m,lag.max=60,plot=T,lwd=2,xlab='',main='ACF de i3M'),
+  ggPacf(i_3m,lag.max=60,plot=T,lwd=2,xlab='',main='PACF de i3M'),
+  ggAcf(i_1y,lag.max=60,plot=T,lwd=2,xlab='',main='ACF de i1Y'),
+  ggPacf(i_1y,lag.max=60,plot=T,lwd=2,xlab='',main='PACF de i1Y')
+)
 
 summary(ur.df(i_3m,type = 'trend', selectlags = 'AIC'))
 summary(ur.df(i_3m,type = 'drift', selectlags = 'AIC'))
 summary(ur.df(i_3m,type = 'none', selectlags = 'AIC'))
 
-acf(i_3m, lag.max = 60)
-pacf(i_3m, lag.max = 60)
-acf(i_1y, lag.max = 60)
-pacf(i_1y, lag.max = 60)
+summary(ur.df(i_1y,type = 'trend', selectlags = 'AIC'))
+summary(ur.df(i_1y,type = 'drift', selectlags = 'AIC'))
+summary(ur.df(i_1y,type = 'none', selectlags = 'AIC'))
 
 summary(ur.pp(i_3m,model=c("trend"), type=c("Z-tau")))
 summary(ur.pp(i_1y,model=c("trend"), type=c("Z-tau")))
@@ -800,7 +797,9 @@ summary(ur.kpss(i_1y, type=c("tau")))#ho: estacionariedad
 summary(ur.kpss(diff(i_3m), type=c("tau")))#ho: estacionariedad
 summary(ur.kpss(diff(i_1y), type=c("tau")))#ho: estacionariedad
 
-coint.test(i_1y, i_3m, nlag = 1) #los residuos del polinomio no tienen raíz unitaria
+nrow(UK) #se usa -3.368 como estadístico de prueba en EG, el tamaño de la muestra es 247
+cointev(i_5y, i_1y, orden=1, table.c = 3.368) #no son cointegradas de 5 años y 1 año
+cointev(i_1y, i_3m, orden=1, table.c = 3.368) #los residuos del polinomio no tienen raíz unitaria
 #son cointegradas de orden 1
 
 UK_MCOD1 <- dynlm(i_1y ~ i_3m + L(d(i_3m),-1:1)); summary(UK_MCOD1)
@@ -813,19 +812,21 @@ mcod_seleccion4 = function(max.lag){
   }  
 }
 mcod_seleccion4(max.lag=5) #según criterio de BIC es mejor -1,1 y por AIC es mejor -2,2
-MCOD_UK<-dynlm(i_1y ~ i_3m + L(d(i_3m),-2:2))
+MCOD_UK<-dynlm(i_1y ~ i_3m + L(d(i_3m),-1:1))
 coeftest(MCOD_UK, vcov.=vcovHC(MCOD_UK))
+grid.arrange(
+  ggAcf(residuals(MCOD_UK),lag.max=25,plot=T,lwd=2,xlab='',main='ACF de residuos MCOD_UK'),
+  ggPacf(residuals(MCOD_UK),lag.max=25,plot=T,lwd=2,xlab='',main='PACF de residuos MCOD_UK')
+)
 
-ts.plot(i_1y-i_3m, residuals(MCOD_UK), col=c("brown", "midnightblue"))
-residplot<-data.frame(time=Date_4[3:246], c(i_1y-i_3m)[3:246], residuals(MCOD_UK))
+residplot1<-data.frame(time=Date_4[3:246], variable = c(i_1y-i_3m)[3:246])
+residplot2<-data.frame(time=Date_4[3:246], variable = residuals(MCOD_UK))
 
-residMCOD<-ggplot(residplot, colour=factor(names(residplot))) + geom_line(aes(x = time, y = c.i_1y...i_3m..3.246.), color="brown") +
-            geom_line(aes(x = time, y = residuals.MCOD_UK.), color="midnightblue") 
-residMCOD<-residMCOD + xlab('') + ylab('')+
+ggplot(residplot1,aes(time,variable)) + geom_line(aes(color="Spread 1Y-3M")) + 
+           geom_line(data =  residplot2, aes(color="Residuos MCOD_UK")) + xlab('') + ylab('')+
+              labs(color='Series') + theme_excel_new() + scale_color_stata() +
             ggtitle('Modelo vs residuos de MCOD') +
-            scale_color_manual(labels = c("i_1y-i_3m","residuals(MCOD_UK)")) +
             theme(legend.position="bottom")
-residMCOD
 
 summary(ur.df(residuals(MCOD_UK), type = "none", selectlags = "AIC")) #residuales estacionarios
 Box.test(residuals(MCOD_UK),lag=60, type = "Box-Pierce") #rechazo H0, no se cumple el supuesto. 
@@ -837,11 +838,53 @@ Box.test(residuals(MCOD_UK),lag=60, type = "Ljung-Box") #rechazo H0, no se cumpl
 Box.test(residuals(MCOD_UK),type='Ljung-Box',lag=20) #rechazo H0, no se cumple el supuesto.
 Box.test(residuals(MCOD_UK),type='Ljung-Box',lag=10) #rechazo H0, no se cumple el supuesto.
 
-checkresiduals(residuals(MCOD_UK), test = 'LB', lag = 250) #Se rechaza no correlación serial.
-checkresiduals(MCOD_UK, test = 'LB', lag = 250, plot = F) #Se rechaza no correlación serial.
+checkresiduals(MCOD_UK, test = 'LB', lag = 60) #Se rechaza no correlación serial.
+checkresiduals(MCOD_UK, test = 'BG', lag = 60, plot = F) #Se rechaza no correlación serial.
 jarque.bera.test(residuals(MCOD_UK)) #No normalidad de los residuos.
 ArchTest(residuals(MCOD_UK),lags = 25) #Se rechaza homoscedasticidad.
 
 #Corrección de errores
+beta_UK<- coefficients(dynlm(i_1y ~ i_3m))[2] 
+vecm_seleccion41 = function(max.lagind, max.lagdep){
+  for (i in 0:max.lagind) {
+    for (j in 1:max.lagdep)  {
+      vecm <- dynlm(d(i_1y) ~  L(i_1y-beta_UK*i_3m,1) + L(d(i_3m), 0:i) + L(d(i_1y), 1:j))
+      print( c(i, j, AIC(vecm), BIC(vecm)) )
+    }
+  }  
+}
+vecm_seleccion41(max.lagind=4, max.lagdep=4) #El mejor es con 1 y 4 (o 0 y 4) rezagos en independiente y dependiente
 
-lm(i_1y~i_3m)
+vecm_seleccion42 = function(max.lagind, max.lagdep){
+  for (i in 0:max.lagind) {
+    for (j in 1:max.lagdep)  {
+      vecm <- dynlm(d(i_3m) ~  L(i_1y-beta_UK*i_3m,1)+ L(d(i_3m), 1:j) + L(d(i_1y), 0:i))
+      print( c(i, j, AIC(vecm), BIC(vecm)) )
+    }
+  }  
+}
+vecm_seleccion42(max.lagind=4, max.lagdep=4)#El mejor es con 3 y 4 (o 4 y 1) rezagos en independiente y dependiente
+
+VECM_UK1 <- dynlm(d(i_1y) ~  L(i_1y-beta_UK*i_3m,1) + L(d(i_3m), 0:0) + L(d(i_1y), 1:4)) ;summary(VECM_UK1)
+VECM_UK2 <- dynlm(d(i_3m) ~  L(i_1y-beta_UK*i_3m,1)+ L(d(i_3m), 1:4) + L(d(i_1y), 0:3)) ;summary(VECM_UK2) 
+
+robust_se1 <- sqrt(diag(vcovHC(VECM_UK1, type = "HC1")))
+stargazer::stargazer(VECM_UK1, VECM_UK1, type = "text",
+                  se = list(NULL, robust_se1))
+robust_se2 <- sqrt(diag(vcovHC(VECM_UK2, type = "HC1")))
+stargazer::stargazer(VECM_UK2, VECM_UK2, type = "text",
+                     se = list(NULL, robust_se2))
+#Verificación de residuos
+checkresiduals(VECM_UK1, test = 'BG', lag = 60)
+checkresiduals(VECM_UK1, test = 'LB', lag = 60,plot = F)
+jarque.bera.test(residuals(VECM_UK1))
+shapiro.test(residuals(VECM_UK1)); qqnorm(residuals(VECM_UK1))
+ArchTest(residuals(VECM_UK1), lags = 60)
+#Se cumplen supuestos de homoscedasticidad y autocorrelación: errores estacionarios.
+checkresiduals(VECM_UK2, test = 'BG', lag = 60)
+checkresiduals(VECM_UK2, test = 'LB', lag = 60,plot = F)
+jarque.bera.test(residuals(VECM_UK2))
+shapiro.test(residuals(VECM_UK2)); qqnorm(residuals(VECM_UK2))
+ArchTest(residuals(VECM_UK2), lags = 60)
+
+#Se cumplen supuestos de homoscedasticidad y autocorrelación: errores estacionarios.
