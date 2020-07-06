@@ -218,7 +218,7 @@ grid.arrange(
   ggAcf(residuals(sarima),lag.max=60,plot=T,lwd=2,xlab='',main='ACF de residuos SARIMA'),
   ggPacf(residuals(sarima),lag.max=60,plot=T,lwd=2,xlab='',main='PACF de residuos SARIMA')
 )
-summary(ur.df(residuals(sarima),type = 'none', selectlags = 'AIC'));interp_urdf(ur.df(residuals(arima1),type = 'none'),level = "5pct") #estacionarios
+summary(ur.df(residuals(sarima),type = 'none', selectlags = 'AIC'));interp_urdf(ur.df(residuals(sarima),type = 'none'),level = "5pct") #estacionarios
 
 ArchTest(residuals(sarima), lags = length(IPC_DE)/4) #homoscedasticos
 Box.test(residuals(sarima),type='Box-Pierce',lag=length(IPC_DE)/4)
@@ -228,10 +228,10 @@ shapiro.test(residuals(sarima)) #Normalmente distribuidos
 jarque.bera.test(residuals(sarima))
 
 #Ajustado vs. Observado
-autoplot(cbind(Diff, fitted(sarima)), main='Estimado y observado') + scale_x_continuous(limit = c(2000, 2020))
+autoplot(cbind(Diff, fitted(sarima)), main='Estimado y observado') + scale_x_continuous(limit = c(2000, 2020)) + theme_minimal()
 #Pronóstico
-fore1<-autoplot(forecast::forecast(sarima, level = c(95), h = 7), main='Pronóstico hasta noviembre de 2020', ylab='Cambio del IPC', xlab='')+
-  scale_x_continuous(limit = c(2015, 2025))
+fore1<-autoplot(forecast::forecast(sarima, level = c(95), h = 20), main='Pronóstico hasta noviembre de 2020', ylab='Cambio del IPC', xlab='')+
+  scale_x_continuous(limit = c(2015, 2025)) + theme_minimal() + scale_color_stata()
 print(fore1)
 
 ### Identify Outliers
@@ -252,10 +252,16 @@ print(fore1)
 #sarimax
 
 #Segundo punto####
-Data_UR<-read.csv(file.choose())
+Data_UR$<-read.csv(file.choose())
 View(Data_UR)
 attach(Data_UR)
-plot(x1, type = 'l')
+x1<-ts(Data_UR$x1, start = 1, frequency = 1)
+x2<-ts(Data_UR$x2, start = 1, frequency = 1)
+x3<-ts(Data_UR$x3, start = 1, frequency = 1)
+
+autoplot(x1, type = 'l')+theme_minimal()
+autoplot(x2, type = 'l')+theme_minimal()
+autoplot(x3, type = 'l')+theme_minimal()
 plot(x2, type = 'l')
 plot(x3, type = 'l')
 
@@ -368,11 +374,11 @@ x4<-ts(x4, start = 1, frequency = 1)
 x5<-ts(x5, start = 1, frequency = 1)
 t<-X
 grid.arrange(
-  ggplot(Data_coin, aes(t,x1))+geom_line(colour='Midnightblue'),
-  ggplot(Data_coin, aes(t,x4))+geom_line(colour='Midnightblue'),
-  ggplot(Data_coin, aes(t,x2))+geom_line(colour='Midnightblue'),
-  ggplot(Data_coin, aes(t,x5))+geom_line(colour='Midnightblue'),
-  ggplot(Data_coin, aes(t,x3))+geom_line(colour='Midnightblue'))
+  ggplot(Data_coin, aes(t,x1))+geom_line(colour='Midnightblue')+theme_minimal(),
+  ggplot(Data_coin, aes(t,x4))+geom_line(colour='Midnightblue')+theme_minimal(),
+  ggplot(Data_coin, aes(t,x2))+geom_line(colour='Midnightblue')+theme_minimal(),
+  ggplot(Data_coin, aes(t,x5))+geom_line(colour='Midnightblue')+theme_minimal(),
+  ggplot(Data_coin, aes(t,x3))+geom_line(colour='Midnightblue')+theme_minimal())
 
 #----------X1
 grid.arrange(
@@ -550,7 +556,7 @@ cointev(x4,x5, orden=1,table.c=3.35)
 
 #paso1: regresión y estimar errores
 #MCO
-cointx1_x2<-lm(x2~x1)
+cointx1_x2<-lm(x1~x2)
 summary(cointx1_x2)
 residx1_x2<-cointx1_x2$residuals
 #prueba de raiz unitaria para los errores
@@ -558,6 +564,7 @@ grid.arrange(
   ggAcf(residx1_x2,lag.max=25,plot=T,lwd=2,xlab='',main='ACF de los Residuos'),
   ggPacf(residx1_x2,lag.max=25,plot=T,lwd=2,xlab='',main='PACF de los Residuos')
 )
+stargazer::stargazer(cointx1_x2)
 
 raizx1_x2<-ur.df(residx1_x2,type="none",selectlags = "AIC")
 summary(raizx1_x2)
@@ -577,7 +584,10 @@ mcod_seleccion(max.lag=20) #el mejor es 1,-1 por ambos criterios
 MCOD_12 <- dynlm(x1 ~ x2 + L(d(x2),-1:1)); summary(MCOD_12)
 DF_MCOD12<-(ur.df(residuals(MCOD_12), type = "none", selectlags = "AIC"))
 interp_urdf(DF_MCOD12,level = "5pct") # NO HAY RAIZ UNITARIA 
-
+stargazer::stargazer(MCOD_12)
+robust_se5 <- sqrt(diag(vcovHC(MCOD_12, type = "HC1")))
+stargazer::stargazer(MCOD_12, MCOD_12, type = "latex",
+                     se = list(NULL, robust_se5))
 # VERIFICACIÓN DE SUPUESTOS
 grid.arrange(
   ggAcf(residuals(MCOD_12),lag.max=25,plot=T,lwd=2,xlab='',main='ACF de los Residuos'),
@@ -624,10 +634,15 @@ vecm_seleccion2(max.lagind=7, max.lagdep=7)
 VECM_12_1 <- dynlm(d(x1) ~  L(x1-beta_12*x2) + L(d(x2), 0:1)) ; BIC(VECM_12_1)
 summary(VECM_12_1) # por criterios de información, empeora al incluir rezagos de x1
 
-
+robust_se19 <- sqrt(diag(vcovHC(VECM_12_1, type = "HC1")))
+stargazer::stargazer(VECM_12_1, VECM_12_1, type = "latex",
+                     se = list(NULL, robust_se19))
 VECM_12_2 <- dynlm(d(x2) ~  L(x1-beta_12*x2,1) +L(d(x1),0:4) ) ;BIC(VECM_12_2)
 summary(VECM_12_2)
 
+robust_se20 <- sqrt(diag(vcovHC(VECM_12_2, type = "HC1")))
+stargazer::stargazer(VECM_12_2, VECM_12_2, type = "latex",
+                     se = list(NULL, robust_se20))
 
 # VERIFICACIÓN DE SUPUESTOS 1 
 grid.arrange(
@@ -814,6 +829,9 @@ mcod_seleccion4 = function(max.lag){
 mcod_seleccion4(max.lag=5) #según criterio de BIC es mejor -1,1 y por AIC es mejor -2,2
 MCOD_UK<-dynlm(i_1y ~ i_3m + L(d(i_3m),-1:1))
 coeftest(MCOD_UK, vcov.=vcovHC(MCOD_UK))
+robust_se <- sqrt(diag(vcovHC(MCOD_UK, type = "HC1")))
+stargazer::stargazer(MCOD_UK, MCOD_UK,
+                     se = list(NULL, robust_se))
 grid.arrange(
   ggAcf(residuals(MCOD_UK),lag.max=25,plot=T,lwd=2,xlab='',main='ACF de residuos MCOD_UK'),
   ggPacf(residuals(MCOD_UK),lag.max=25,plot=T,lwd=2,xlab='',main='PACF de residuos MCOD_UK')
@@ -822,10 +840,19 @@ grid.arrange(
 residplot1<-data.frame(time=Date_4[3:246], variable = c(i_1y-i_3m)[3:246])
 residplot2<-data.frame(time=Date_4[3:246], variable = residuals(MCOD_UK))
 
+ggplot(residplot1,aes(time,variable)) + geom_line(aes(color="Spread 1Y-3M")) +
+  geom_line(data = UK, aes(Date_4, i_3m, color="1Y")) +
+  geom_line(data= UK, aes(Date_4, i_1y, color="3M"))+
+  xlab('') + ylab('')+
+  labs(color='Series') + theme_minimal() + scale_color_stata() +
+  
+  theme(legend.position="bottom")
+
 ggplot(residplot1,aes(time,variable)) + geom_line(aes(color="Spread 1Y-3M")) + 
-           geom_line(data =  residplot2, aes(color="Residuos MCOD_UK")) + xlab('') + ylab('')+
-              labs(color='Series') + theme_excel_new() + scale_color_stata() +
-            ggtitle('Modelo vs residuos de MCOD') +
+           geom_line(data =  residplot2, aes(color="Residuos MCOD_UK")) +
+            xlab('') + ylab('')+
+            labs(color='Series') + theme_excel_new() + scale_color_stata() +
+            ggtitle('Spread vs residuos de MCOD') +
             theme(legend.position="bottom")
 
 summary(ur.df(residuals(MCOD_UK), type = "none", selectlags = "AIC")) #residuales estacionarios
@@ -866,13 +893,13 @@ vecm_seleccion42 = function(max.lagind, max.lagdep){
 vecm_seleccion42(max.lagind=4, max.lagdep=4)#El mejor es con 3 y 4 (o 4 y 1) rezagos en independiente y dependiente
 
 VECM_UK1 <- dynlm(d(i_1y) ~  L(i_1y-beta_UK*i_3m,1) + L(d(i_3m), 0:0) + L(d(i_1y), 1:4)) ;summary(VECM_UK1)
-VECM_UK2 <- dynlm(d(i_3m) ~  L(i_1y-beta_UK*i_3m,1)+ L(d(i_3m), 1:4) + L(d(i_1y), 0:3)) ;summary(VECM_UK2) 
+VECM_UK2 <- dynlm(d(i_3m) ~  L(i_1y-beta_UK*i_3m,1)+ L(d(i_3m), 1:4) + L(d(i_1y), 0:1)) ;summary(VECM_UK2) 
 
 robust_se1 <- sqrt(diag(vcovHC(VECM_UK1, type = "HC1")))
-stargazer::stargazer(VECM_UK1, VECM_UK1, type = "text",
+stargazer::stargazer(VECM_UK1, VECM_UK1, type = "latex",
                   se = list(NULL, robust_se1))
 robust_se2 <- sqrt(diag(vcovHC(VECM_UK2, type = "HC1")))
-stargazer::stargazer(VECM_UK2, VECM_UK2, type = "text",
+stargazer::stargazer(VECM_UK2, VECM_UK2, type = "latex",
                      se = list(NULL, robust_se2))
 #Verificación de residuos
 checkresiduals(VECM_UK1, test = 'BG', lag = 60)
@@ -886,5 +913,11 @@ checkresiduals(VECM_UK2, test = 'LB', lag = 60,plot = F)
 jarque.bera.test(residuals(VECM_UK2))
 shapiro.test(residuals(VECM_UK2)); qqnorm(residuals(VECM_UK2))
 ArchTest(residuals(VECM_UK2), lags = 60)
-
+kurtosis(i_3m, method = "moment"); kurtosis(i_1y, method = "moment")
+skewness(i_3m); skewness(i_1y)
+boxplot(i_3m); boxplot(i_1y)
 #Se cumplen supuestos de homoscedasticidad y autocorrelación: errores estacionarios.
+
+autoplot(cbind(fitted(VECM_UK1), i_1y-i_3m))
+autoplot(cbind(fitted(VECM_UK2), i_1y-i_3m))
+
