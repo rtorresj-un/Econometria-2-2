@@ -68,12 +68,22 @@ summary(VAR3_1)
 ##Creamos la matriz de efectos contemporaneos 
 matrix_1=as.matrix(cbind(c(1,NA),c(NA,1)))
 matrix_1
-SVAR(VAR3_1, Amat = matrix_1, Bmat = NULL )
-summary(SVAR3)
+SVAR(VAR3_1, Amat = matrix_1, Bmat = NULL, hessian = TRUE, method="BFGS" )
 help("SVAR")
+##Ya queda definido el modelo con efectos contemporaneos 
+##Impulso respuesta 
+I.R<-irf(SVAR3, n.ahead = 100, ci=.95)
+x11()
+plot(I.R)
+###### Otro método para obtener el SVAR
+SVAR3_1<-BQ(VAR3_1)
+summary(SVAR3_1)
+##Impulso respuesta 
+myIRF <- irf(SVAR3_1, n.ahead=40, ci=.95)
 
 
-
+myIRF.c <- irf(SVAR3_1, n.ahead=40, ci=.95, cumulative=TRUE)
+plot( myIRF.c, plot.type="multiple")
 
 
 
