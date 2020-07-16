@@ -79,13 +79,15 @@ plot(I.R)
 SVAR3_1<-BQ(VAR3_1)
 summary(SVAR3_1)
 ##Impulso respuesta 
-myIRF <- irf(SVAR3_1, n.ahead=40, ci=.95)
+myIRF <- irf(SVAR3_1, n.ahead=100, ci=.95)
 
 
-myIRF.c <- irf(SVAR3_1, n.ahead=40, ci=.95, cumulative=TRUE)
+myIRF.c <- irf(SVAR3_1, n.ahead=100, ci=.95, cumulative=TRUE)
 plot( myIRF.c, plot.type="multiple")
 
-
-
+##validación de supuestos 
+##Estabilidad del proceso
+roots(VAR3)
+##El proceso es estable 
 ##########################################################################################################
 #########Punto 3
