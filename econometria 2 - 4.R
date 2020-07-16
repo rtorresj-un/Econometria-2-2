@@ -52,12 +52,30 @@ summary(ur.df(Y_2, lags=8, selectlags = "AIC", type = "trend"))
 ##por tanto hacemos ambas pruebas 
 summary(ur.df(Y_1, lags=8, selectlags = "AIC", type = "drift"))
 ##confirmamos que la serie es I(0)
+##Creamos modelo VAR
+Y<-cbind(Y_1,Y_2)
+VARselect(Y, lag.max = 8, type = "both", season = NULL)## 3 rezagos
+VARselect(Y, lag.max = 8, type = "trend")##3 rezagos
+VARselect(Y, lag.max = 8, type= "none")## 3 rezagos
+##Utilizaremos 3 rezagos para el VAR
+VAR3<-VAR(Y, p=3, type = "both")
+summary(VAR3)
+##La tendencia y la constante no son significativas
+VAR3_1<-VAR(Y, p=3, type = "none")
+summary(VAR3_1)
 ##Modelo SVAR
 ##unimos las dos series en una matriz
-Y=cbind(Y_1,Y_2)
-VARselect(Y, lag.max = 8, type = "trend")
-VAR_1<-VAR(Y,p=3, type="both")
-summary(VAR_1)
-VAR_1_1<-VAR(Y,p=3, type="none")
-summary(VAR_1_1)
-SVAR(VAR_1_1, Amat = , Bmat = )
+##Creamos la matriz de efectos contemporaneos 
+matrix_1=as.matrix(cbind(c(1,NA),c(NA,1)))
+matrix_1
+SVAR(VAR3_1, Amat = matrix_1, Bmat = NULL )
+summary(SVAR3)
+help("SVAR")
+
+
+
+
+
+
+##########################################################################################################
+#########Punto 3
