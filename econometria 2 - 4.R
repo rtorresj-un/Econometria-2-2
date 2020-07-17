@@ -10,8 +10,8 @@ library(gridExtra)
 library(dplyr)
 library(tidyr)
 library(svars)
-
-
+library(AER)
+library(dynlm)
 #########################################################################
 #########Punto 1
 
@@ -87,6 +87,7 @@ normality.test(VAR3_1)
 matrix_1=as.matrix(cbind(c(1,NA),c(NA,1)))
 matrix_1
 SVAR3_1<-SVAR(VAR3_1, Amat = matrix_1, Bmat = NULL, hessian = TRUE, method="scoring" )
+SVAR3_1
 help("SVAR")
 ##Ya queda definido el modelo con efectos contemporaneos 
 ##La matríz de VAR_COV
@@ -106,7 +107,28 @@ x11()
 fevd(SVAR3_1, n.ahead = 24)
 plot(fevd(SVAR3_1, n.ahead = 24),col=c("red", "green"))
 ##Obteniendo los parametros etimados del SVAR
-
+##Creamos las matrices con los coeficientes de los rezagos del VAR
+#T_0: No hay interceptos
+#T_1:
+T_1<-as.matrix(cbind(c(-0.18291,-0.44293),c(-0.09498, -0.36287)))
+T_1
+#T_2
+T_2<-as.matrix(cbind(c(-0.20118,0.07185),c(-0.34974,0.050365)))
+T_2
+#T_3
+T_3<-as.matrix(cbind(c(-0.04237,0.02078),c(-0.05186,-0.16564)))
+T_3
+##Inversa de A 
+InvA<-solve(SVAR3_1$A)
+##Obtenemos las matrices del VAR en forma reducida
+#a_1
+a_1<-InvA%*%T_1
+#a_2
+a_2<-InvA%*%T_2
+#a_3
+a_3<-InvA%*%T_3
+####EL VAR EN FORMA REDUCIDA QUEDA:
+VAR_R<-dynlm(Y~a_1*L(Y, 1)+a_2*L(Y,2)+a_3*L(Y,3))
 ## Prónostico 5 pasos adelante
 
 ###### Otro método para obtener el SVAR
