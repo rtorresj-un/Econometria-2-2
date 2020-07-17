@@ -63,31 +63,6 @@ summary(VAR3)
 ##La tendencia y la constante no son significativas
 VAR3_1<-VAR(Y, p=3, type = "none")
 summary(VAR3_1)
-##Modelo SVAR
-##unimos las dos series en una matriz
-##Creamos la matriz de efectos contemporaneos 
-matrix_1=as.matrix(cbind(c(1,NA),c(NA,1)))
-matrix_1
-SVAR3_1<-SVAR(VAR3_1, Amat = matrix_1, Bmat = NULL, hessian = TRUE, method="scoring" )
-help("SVAR")
-##Ya queda definido el modelo con efectos contemporaneos 
-##Impulso respuesta 
-I.R<-irf(SVAR3_1,impulse = "Y_1", response = "Y_2", n.ahead = 50, ci=.95, ortho = F)
-I.R.1<-irf(SVAR3_1,impulse = "Y_2", response = "Y_1", n.ahead = 50, ci=.95, ortho = F)
-I.R.2<-irf(SVAR3_1,impulse = "Y_1", response = "Y_1", n.ahead = 50, ci=.95, ortho = F)
-I.R.3<-irf(SVAR3_1,impulse = "Y_2", response = "Y_2", n.ahead = 50, ci=.95, ortho = F)
-x11()
-plot(I.R.1)
-###### Otro método para obtener el SVAR
-SVAR3_1<-BQ(VAR3_1)
-summary(SVAR3_1)
-##Impulso respuesta 
-myIRF <- irf(SVAR3_1, n.ahead=100, ci=.95)
-
-
-myIRF.c <- irf(SVAR3_1, n.ahead=100, ci=.95, cumulative=TRUE)
-plot( myIRF.c, plot.type="multiple")
-
 ##validación de supuestos 
 ##Estabilidad del proceso
 roots(VAR3_1)
@@ -106,5 +81,33 @@ arch.test(VAR3_1, lags.multi = 24, multivariate.only = TRUE) #No rechazo, se cum
 arch.test(VAR3_1, lags.multi = 12, multivariate.only = TRUE) #No rechazo, se cumple el supuesto
 ##Válidamos el supuesto de normalidad
 normality.test(VAR3_1)
+##Modelo SVAR
+##unimos las dos series en una matriz
+##Creamos la matriz de efectos contemporaneos 
+matrix_1=as.matrix(cbind(c(1,NA),c(NA,1)))
+matrix_1
+SVAR3_1<-SVAR(VAR3_1, Amat = matrix_1, Bmat = NULL, hessian = TRUE, method="scoring" )
+help("SVAR")
+##Ya queda definido el modelo con efectos contemporaneos 
+##La matríz de VAR_COV
+SVAR3_1$A %*% SVAR3_1$Sigma.U %*% SVAR3_1$A
+##Impulso respuesta 
+I.R<-irf(SVAR3_1,impulse = "Y_1", response = "Y_2", n.ahead = 50, ci=.95, ortho = F)
+I.R.1<-irf(SVAR3_1,impulse = "Y_2", response = "Y_1", n.ahead = 50, ci=.95, ortho = F)
+I.R.2<-irf(SVAR3_1,impulse = "Y_1", response = "Y_1", n.ahead = 50, ci=.95, ortho = F)
+I.R.3<-irf(SVAR3_1,impulse = "Y_2", response = "Y_2", n.ahead = 50, ci=.95, ortho = F)
+x11()
+plot(I.R.1)
+###### Otro método para obtener el SVAR
+SVAR3_1<-BQ(VAR3_1)
+summary(SVAR3_1)
+##Impulso respuesta 
+myIRF <- irf(SVAR3_1, n.ahead=100, ci=.95)
+
+
+myIRF.c <- irf(SVAR3_1, n.ahead=100, ci=.95, cumulative=TRUE)
+plot( myIRF.c, plot.type="multiple")
+
+
 ##########################################################################################################
 #########Punto 3
