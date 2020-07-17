@@ -68,13 +68,16 @@ summary(VAR3_1)
 ##Creamos la matriz de efectos contemporaneos 
 matrix_1=as.matrix(cbind(c(1,NA),c(NA,1)))
 matrix_1
-SVAR(VAR3_1, Amat = matrix_1, Bmat = NULL, hessian = TRUE, method="BFGS" )
+SVAR3_1<-SVAR(VAR3_1, Amat = matrix_1, Bmat = NULL, hessian = TRUE, method="scoring" )
 help("SVAR")
 ##Ya queda definido el modelo con efectos contemporaneos 
 ##Impulso respuesta 
-I.R<-irf(SVAR3, n.ahead = 100, ci=.95)
+I.R<-irf(SVAR3_1,impulse = "Y_1", response = "Y_2", n.ahead = 50, ci=.95, ortho = F)
+I.R.1<-irf(SVAR3_1,impulse = "Y_2", response = "Y_1", n.ahead = 50, ci=.95, ortho = F)
+I.R.2<-irf(SVAR3_1,impulse = "Y_1", response = "Y_1", n.ahead = 50, ci=.95, ortho = F)
+I.R.3<-irf(SVAR3_1,impulse = "Y_2", response = "Y_2", n.ahead = 50, ci=.95, ortho = F)
 x11()
-plot(I.R)
+plot(I.R.1)
 ###### Otro método para obtener el SVAR
 SVAR3_1<-BQ(VAR3_1)
 summary(SVAR3_1)
@@ -87,7 +90,21 @@ plot( myIRF.c, plot.type="multiple")
 
 ##validación de supuestos 
 ##Estabilidad del proceso
-roots(VAR3)
-##El proceso es estable 
+roots(VAR3_1)
+##El proceso es estable
+##Autocorrelación 
+P.75=serial.test(VAR3_1, lags.pt = 75, type = "PT.asymptotic");P.75 #No rechazo, se cumple el supuesto
+P.30=serial.test(VAR3_1, lags.pt = 30, type = "PT.asymptotic");P.30 #No rechazo, se cumple el supuesto
+P.20=serial.test(VAR3_1, lags.pt = 20, type = "PT.asymptotic");P.20  #No rechazo, se cumple el supuesto
+P.10=serial.test(VAR3_1, lags.pt = 10, type = "PT.asymptotic");P.10 #No rechazo, se cumple el supuesto
+#Vemos las gráficas ACF y PACF
+x11()
+plot(P.30, names = "Series.1") 
+plot(P.30, names = "Series.2") 
+##Validamos el supuesto de homoscedasticidad 
+arch.test(VAR3_1, lags.multi = 24, multivariate.only = TRUE) #No rechazo, se cumple el supuesto.
+arch.test(VAR3_1, lags.multi = 12, multivariate.only = TRUE) #No rechazo, se cumple el supuesto
+##Válidamos el supuesto de normalidad
+normality.test(VAR3_1)
 ##########################################################################################################
 #########Punto 3
