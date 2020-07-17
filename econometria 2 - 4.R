@@ -100,13 +100,13 @@ lags=c(0:5)
 
 
 #IRF de las variables del sistema ante distintos choques exÃ³genos.
-IRF1 = irf(SVAR3_1, impulse="Y_1",response="Y_1",n.ahead = 5,ci = 0.95, ortho=F)  
+IRF1 = irf(SVAR3_1, impulse="Y_1",response="Y_1",n.ahead = 50,ci = 0.95, ortho=F)  
 IRF1.1= data.frame(IRF1$irf,IRF1$Lower,IRF1$Upper, lags)
-IRF2 = irf(SVAR3_1, impulse="Y_1",response="Y_2",n.ahead = 5,ci=0.95, ortho=F)  
+IRF2 = irf(SVAR3_1, impulse="Y_1",response="Y_2",n.ahead = 50,ci=0.95, ortho=F)  
 IRF1.2= data.frame(IRF2$irf,IRF2$Lower,IRF2$Upper, lags)
-IRF3 = irf(SVAR3_1, impulse="Y_2",response="Y_1",n.ahead = 5,ci=0.95, ortho=F)   
+IRF3 = irf(SVAR3_1, impulse="Y_2",response="Y_1",n.ahead = 50,ci=0.95, ortho=F)   
 IRF2.1= data.frame(IRF3$irf,IRF3$Lower,IRF3$Upper, lags)
-IRF4 = irf(SVAR3_1, impulse="Y_2",response="Y_2",n.ahead = 5,ci=0.95, ortho=F)  ;
+IRF4 = irf(SVAR3_1, impulse="Y_2",response="Y_2",n.ahead = 50,ci=0.95, ortho=F)  ;
 IRF2.2= data.frame(IRF4$irf,IRF4$Lower,IRF4$Upper, lags)
 
 
