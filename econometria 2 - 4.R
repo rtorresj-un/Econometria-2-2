@@ -90,18 +90,72 @@ SVAR3_1<-SVAR(VAR3_1, Amat = matrix_1, Bmat = NULL, hessian = TRUE, method="scor
 SVAR3_1
 help("SVAR")
 ##Ya queda definido el modelo con efectos contemporaneos 
-##La matríz de VAR_COV
-SVAR3_1$A %*% SVAR3_1$Sigma.U %*% SVAR3_1$A
 ##Impulso respuesta 
-I.R<-irf(SVAR3_1,impulse = "Y_1", response = "Y_2", n.ahead = 50, ci=.95, ortho = F)
-I.R.1<-irf(SVAR3_1,impulse = "Y_2", response = "Y_1", n.ahead = 50, ci=.95, ortho = F)
-I.R.2<-irf(SVAR3_1,impulse = "Y_1", response = "Y_1", n.ahead = 50, ci=.95, ortho = F)
-I.R.3<-irf(SVAR3_1,impulse = "Y_2", response = "Y_2", n.ahead = 50, ci=.95, ortho = F)
+lags=c(0:5)
+
+
+#IRF de las variables del sistema ante distintos choques exÃ³genos.
+IRF1 = irf(SVAR3_1, impulse="Y_1",response="Y_1",n.ahead = 5,ci = 0.95, ortho=F)  
+IRF1.1= data.frame(IRF1$irf,IRF1$Lower,IRF1$Upper, lags)
+IRF2 = irf(SVAR3_1, impulse="Y_1",response="Y_2",n.ahead = 5,ci=0.95, ortho=F)  
+IRF1.2= data.frame(IRF2$irf,IRF2$Lower,IRF2$Upper, lags)
+IRF3 = irf(SVAR3_1, impulse="Y_2",response="Y_1",n.ahead = 5,ci=0.95, ortho=F)   
+IRF2.1= data.frame(IRF3$irf,IRF3$Lower,IRF3$Upper, lags)
+IRF4 = irf(SVAR3_1, impulse="Y_2",response="Y_2",n.ahead = 5,ci=0.95, ortho=F)  ;
+IRF2.2= data.frame(IRF4$irf,IRF4$Lower,IRF4$Upper, lags)
+
+
+y1.y1 <- IRF1.1%>% 
+        ggplot(aes(x=IRF1.1[,4], y=IRF1.1[,1], ymin=IRF1.1[,2], ymax=IRF1.1[,3] )) +
+        geom_hline(yintercept = 0, color="red") +
+        geom_ribbon(fill="grey", alpha=0.2) +
+        geom_line() +
+        theme_light() +
+        ggtitle("Impulso de y1 - respuesta de y1")+
+        ylab("")+
+        xlab("pasos adelante") +
+        theme(plot.title = element_text(size = 11, hjust=0.5),
+              axis.title.y = element_text(size=11))
+
+y1.y2 <- IRF1.2%>% 
+        ggplot(aes(x=IRF1.2[,4], y=IRF1.2[,1], ymin=IRF1.2[,2], ymax=IRF1.2[,3] )) +
+        geom_hline(yintercept = 0, color="red") +
+        geom_ribbon(fill="grey", alpha=0.2) +
+        geom_line() +
+        theme_light() +
+        ggtitle("Impulso de y1 - respuesta de y2")+
+        ylab("")+
+        xlab("pasos adelante") +
+        theme(plot.title = element_text(size = 11, hjust=0.5),
+              axis.title.y = element_text(size=11))
+
+y2.y1 <- IRF2.1%>% 
+        ggplot(aes(x=IRF2.1[,4], y=IRF2.1[,1], ymin=IRF2.1[,2], ymax=IRF2.1[,3] )) +
+        geom_hline(yintercept = 0, color="red") +
+        geom_ribbon(fill="grey", alpha=0.2) +
+        geom_line() +
+        theme_light() +
+        ggtitle("Impulso de y2 - respuesta de y1")+
+        ylab("")+
+        xlab("pasos adelante") +
+        theme(plot.title = element_text(size = 11, hjust=0.5),
+              axis.title.y = element_text(size=11))
+
+y2.y2 <- IRF2.2%>% 
+        ggplot(aes(x=IRF2.2[,4], y=IRF2.2[,1], ymin=IRF2.2[,2], ymax=IRF2.2[,3] )) +
+        geom_hline(yintercept = 0, color="red") +
+        geom_ribbon(fill="grey", alpha=0.2) +
+        geom_line() +
+        theme_light() +
+        ggtitle("Impulso de y2 - respuesta de y2")+
+        ylab("")+
+        xlab("pasos adelante") +
+        theme(plot.title = element_text(size = 11, hjust=0.5),
+              axis.title.y = element_text(size=11))
+
 x11()
-plot(I.R)
-plot(I.R.1)
-plot(I.R.2)
-plot(I.R.3)
+grid.arrange(y1.y1,y1.y2,y2.y1,y2.y2,ncol=2)
+
 ## Descomposición de la varianza
 x11()
 fevd(SVAR3_1, n.ahead = 24)
@@ -128,18 +182,12 @@ a_2<-InvA%*%T_2
 #a_3
 a_3<-InvA%*%T_3
 ####EL VAR EN FORMA REDUCIDA QUEDA:
-VAR_R<-dynlm(Y~a_1*L(Y, 1)+a_2*L(Y,2)+a_3*L(Y,3))
-## Prónostico 5 pasos adelante
+Er<-InvA%*%SVAR3_1$Sigma.U%*%InvA 
 
-###### Otro método para obtener el SVAR
-SVAR3_1<-BQ(VAR3_1)
-summary(SVAR3_1)
-##Impulso respuesta 
-myIRF <- irf(SVAR3_1, n.ahead=100, ci=.95)
+Y~a_1*L(Y, 1)+a_2*L(Y,2)+a_3*L(Y,3)+Er
 
 
-myIRF.c <- irf(SVAR3_1, n.ahead=100, ci=.95, cumulative=TRUE)
-plot( myIRF.c, plot.type="multiple")
+
 
 
 ##########################################################################################################
