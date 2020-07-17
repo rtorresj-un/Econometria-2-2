@@ -97,7 +97,18 @@ I.R.1<-irf(SVAR3_1,impulse = "Y_2", response = "Y_1", n.ahead = 50, ci=.95, orth
 I.R.2<-irf(SVAR3_1,impulse = "Y_1", response = "Y_1", n.ahead = 50, ci=.95, ortho = F)
 I.R.3<-irf(SVAR3_1,impulse = "Y_2", response = "Y_2", n.ahead = 50, ci=.95, ortho = F)
 x11()
+plot(I.R)
 plot(I.R.1)
+plot(I.R.2)
+plot(I.R.3)
+## Descomposición de la varianza
+x11()
+fevd(SVAR3_1, n.ahead = 24)
+plot(fevd(SVAR3_1, n.ahead = 24),col=c("red", "green"))
+##Obteniendo los parametros etimados del SVAR
+
+## Prónostico 5 pasos adelante
+
 ###### Otro método para obtener el SVAR
 SVAR3_1<-BQ(VAR3_1)
 summary(SVAR3_1)
