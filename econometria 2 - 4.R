@@ -81,6 +81,11 @@ arch.test(VAR3_1, lags.multi = 24, multivariate.only = TRUE) #No rechazo, se cum
 arch.test(VAR3_1, lags.multi = 12, multivariate.only = TRUE) #No rechazo, se cumple el supuesto
 ##Válidamos el supuesto de normalidad
 normality.test(VAR3_1)
+##Pronóstico 
+fore<-predict(VAR3_1, n.ahead=5, ci=.95)
+x11()
+plot(fore)
+help("predict")
 ##Modelo SVAR
 ##unimos las dos series en una matriz
 ##Creamos la matriz de efectos contemporaneos 
