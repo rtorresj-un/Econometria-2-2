@@ -197,3 +197,8 @@ Y~a_1*L(Y, 1)+a_2*L(Y,2)+a_3*L(Y,3)+Er
 
 ##########################################################################################################
 #########Punto 3
+UK<-data.frame(UK_4 <- read_delim(file.choose(),";", escape_double = FALSE, trim_ws = TRUE))
+i_3m<-ts(UK$i_3m, start=2000, frequency = 12)
+i_1y<-ts(UK$i_1y, start=2000, frequency = 12)
+i_5y<-ts(UK$i_5y, start=2000, frequency = 12)
+Date_4<-as.Date(UK$Date4, format = '%d/%m/%y')
