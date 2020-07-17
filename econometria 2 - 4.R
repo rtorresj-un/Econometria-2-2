@@ -12,6 +12,9 @@ library(tidyr)
 library(svars)
 library(AER)
 library(dynlm)
+library(readr)
+library(tsDyn)
+library(VAR.etp)
 #########################################################################
 #########Punto 1
 
@@ -202,3 +205,56 @@ i_3m<-ts(UK$i_3m, start=2000, frequency = 12)
 i_1y<-ts(UK$i_1y, start=2000, frequency = 12)
 i_5y<-ts(UK$i_5y, start=2000, frequency = 12)
 Date_4<-as.Date(UK$Date4, format = '%d/%m/%y')
+x11()
+autoplot(cbind(i_3m, i_1y, i_5y), facets = F, main="Tasas de intrés UK", xlab="", ylab="", size=1)
+## Pruebas de raíz unitaria 
+summary(ur.df(i_3m,type = 'trend', selectlags = 'AIC'))
+summary(ur.df(i_3m,type = 'drift', selectlags = 'AIC'))
+summary(ur.df(i_3m,type = 'none', selectlags = 'AIC'))
+
+summary(ur.df(i_1y,type = 'trend', selectlags = 'AIC'))
+summary(ur.df(i_1y,type = 'drift', selectlags = 'AIC'))
+summary(ur.df(i_1y,type = 'none', selectlags = 'AIC'))
+
+summary(ur.pp(i_3m,model=c("trend"), type=c("Z-tau")))
+summary(ur.pp(i_1y,model=c("trend"), type=c("Z-tau")))
+summary(ur.pp(diff(i_3m),model=c("constant"), type=c("Z-tau")))
+summary(ur.pp(diff(i_1y),model=c("constant"), type=c("Z-tau")))
+
+summary(ur.kpss(i_3m, type=c("tau")))#ho: estacionariedad
+summary(ur.kpss(i_1y, type=c("tau")))#ho: estacionariedad
+summary(ur.kpss(diff(i_3m), type=c("tau")))#ho: estacionariedad
+summary(ur.kpss(diff(i_1y), type=c("tau")))#ho: estacionariedad
+
+## TEST DE JOHANSEN
+i.Y<-cbind(i_3m,i_1y)
+eigen1 = ca.jo(i.Y, ecdet = "none", type = "eigen", K = 2, spec = "longrun",season = NULL)
+summary(eigen1)
+##Al 5% hay una relación de cointegración
+## CRITERIO DE LA TRAZA
+trace1= ca.jo(i.Y, ecdet = "none", type = "trace", K = 2, spec = "longrun",season = NULL)
+summary(trace1) 
+#Al 5% de confianza las series están cointegradas.
+####TEST CON TÉMINOS DETERMINISTICOS
+eigen2 = ca.jo(i.Y, ecdet = "const", type = "eigen", K = 2, spec = "longrun",season = NULL)
+summary(eigen2) #Al 5% de confianza las series est?n cointegradas.
+
+trace2 = ca.jo(i.Y, ecdet = "const", type = "trace", K = 2, spec = "longrun",season = NULL)
+summary(trace2) #Al 5% de confianza las series est?n cointegradas.
+####Estimación de modelos VEC Sin términos deterministicos 
+Vec = cajorls(eigen1, r=1) 
+Vec
+coefB(Vec)
+coefA(Vec)
+####Estimación VEC con términos deterministicos 
+Vec.det<-cajorls(eigen2, r=1)
+Vec.det
+coefB(Vec.det)
+coefA(Vec.det)
+##Test para saber si incluir la tendencia 
+lttest(eigen2, r=1)
+# Cómo no se rechaza Ho, no incluimos la tendencia 
+###Modelo VAR
+VARi<-vec2var(eigen1, r=1)
+VARi
+#########Validación de supuestos 
