@@ -258,3 +258,131 @@ lttest(eigen2, r=1)
 VARi<-vec2var(eigen1, r=1)
 VARi
 #########Validación de supuestos 
+
+
+
+
+### 
+UK<-data.frame(UK_4 <- read_delim(file.choose(),";", escape_double = FALSE, trim_ws = TRUE))
+i_3m<-ts(UK$i_3m, start=2000, frequency = 12)
+i_1y<-ts(UK$i_1y, start=2000, frequency = 12)
+i_5y<-ts(UK$i_5y, start=2000, frequency = 12)
+Date_4<-as.Date(UK$Date4, format = '%d/%m/%y')
+ggplot(UK, aes(Date_4, i_3m)) + geom_line(color='midnightblue') + xlab('')
+ggplot(UK, aes(Date_4, i_1y)) + geom_line(color='midnightblue') + xlab('')
+ggplot(UK, aes(Date_4, i_5y)) + geom_line(color='midnightblue') + xlab('')
+
+autoplot(cbind(i_3m, i_1y), facets = F, main="Precios spot Bonos UK", xlab="", ylab="", size=0.5)
+
+# pruebas de raiz unitaria
+summary(ur.df(i_3m,type = 'trend', lags=6, selectlags = 'AIC')) # Raiz unitaria, tendencia no sig
+summary(ur.df(i_3m,type = 'drift', lags=6,selectlags = 'AIC')) # Raiz unitaria, Deriva no sig 
+summary(ur.df(i_3m,type = 'none', lags=6,selectlags = 'AIC')) # No raiz unitaria 
+
+summary(ur.df(i_1y,type = 'trend', lags=6,selectlags = 'AIC')) # Raiz unitaria, tendencia no sig
+summary(ur.df(i_1y,type = 'drift', lags=6,selectlags = 'AIC'))# Raiz unitaria, Deriva no sig  
+summary(ur.df(i_1y,type = 'none', lags=6,selectlags = 'AIC')) # No raiz unitaria  
+
+summary(ur.pp(i_3m,model=c("constant"), type=c("Z-tau"))) # h0: raiz unitaria 
+summary(ur.pp(i_1y,model=c("constant"), type=c("Z-tau")))
+summary(ur.pp(diff(i_3m),model=c("constant"), type=c("Z-tau")))
+summary(ur.pp(diff(i_1y),model=c("constant"), type=c("Z-tau")))
+
+summary(ur.kpss(i_3m, type=c("mu")))#ho: estacionariedad
+summary(ur.kpss(i_1y, type=c("mu")))#ho: estacionariedad
+summary(ur.kpss(diff(i_3m), type=c("mu")))#ho: estacionariedad
+summary(ur.kpss(diff(i_1y), type=c("mu")))#ho: estacionariedad
+
+Y<- cbind(i_3m,i_1y)
+VARselect(Y, lag.max = 6, type="both", season=NULL) #2 y 4 rezagos, elegimos el m?s parsimonioso
+VARselect(Y, lag.max = 6, type="const", season=NULL) #4 rezagos y 3 rezagos, elegimos el m?s parsimonioso
+VARselect(Y, lag.max = 6, type="none", season=NULL) #3 rezagos y 4 rezagos, elegimos el m?s parsimonioso
+
+# En la mayoria se incluyen 3 y 4 rezagos, por parsimonia 3 
+summary(VAR(Y, p=3, type="both", season=NULL)) #tendencia y constante en una pero no en la otra
+summary(VAR(Y, p=3, type="const", season=NULL)) #La constante no es significativa
+summary(VAR(Y, p=3, type="none", season=NULL)) # tratar in terminos deterministicos 
+
+VAR2 <- VAR(Y, p=2, type="none", season=NULL)
+
+#Vamos a analizar el comportamiento de los residuales, si no se comportan bien incluiremos m?s rezagos
+P.70=serial.test(VAR2, lags.pt = 70, type = "PT.asymptotic");P.70 #No rechazo, se cumple el supuesto
+P.60=serial.test(VAR2, lags.pt = 60, type = "PT.asymptotic");P.60 #No rechazo, se cumple el supuesto
+P.50=serial.test(VAR2, lags.pt = 50, type = "PT.asymptotic");P.50  #No rechazo, se cumple el supuesto
+P.40=serial.test(VAR2, lags.pt = 40, type = "PT.asymptotic");P.40 #No rechazo, se cumple el supuesto
+plot(P.40, names = "i_3m")
+plot(P.40, names = "i_1y")
+
+jarque.bera.test(VAR2$varresult$i_3m$residuals)
+jarque.bera.test(VAR2$varresult$i_1y$residuals)
+VAR2$varresult$i_1y$residuals
+
+# NO SE DISTRIBUYE NORMAL IUDAAAAAAAAAAAAA
+# sin terminos deterministicos#####
+
+eigen1 = ca.jo(Y, ecdet = "none", type = "eigen", K = 3, spec = "longrun",season = NULL)
+summary(eigen1) #Al 5% de confianza las series est?n cointegradas.
+
+#Criterio de la traza. Es un procedimiento secuencial en donde se contrasta
+# H0: r=0 vs H1: r>=1, luego H0: r>=1 vs H1: r>=2, y as? sucesivamente. Aqu? k=2
+
+trace1= ca.jo(Y, ecdet = "none", type = "trace", K = , spec = "longrun",season = NULL)
+summary(trace1) #Al 5% de confianza las series estan cointegradas.
+
+# las series estan cointegradas en ambas pruebas
+# Estimacion vec
+VEC1 = cajorls(eigen1, r=1) 
+VEC1
+
+#Con esta funci?n obtenemos el vector de cointegraci?n normalizado
+coefB(VEC1)
+
+#Con esta funci?n obtenemos los coeficientes de velocidad de ajuste
+coefA(VEC1)
+
+# con terminos deterministicos####
+#Criterio del valor propio (es la prueba m?s robusta). Es un procedimiento secuencial en donde se contrasta
+# H0: r=0 vs H1: r=1, luego H0: r=1 vs H1: r=2, y as? sucesivamente. Aqu? k=4
+
+eigen2 = ca.jo(Y, ecdet = "const", type = "eigen", K = 3, spec = "longrun",season = NULL)
+summary(eigen2) #Al 5% de confianza las series est?n cointegradas.
+
+#Criterio de la traza. Es un procedimiento secuencial en donde se contrasta
+# H0: r=0 vs H1: r>=1, luego H0: r>=1 vs H1: r>=2, y as? sucesivamente. Aqu? k=4
+
+trace2 = ca.jo(Y, ecdet = "const", type = "trace", K = 3, spec = "longrun",season = NULL)
+summary(trace2) #Al 5% de confianza las series est?n cointegradas.
+#Aqu? estimamos el modelo VEC
+VEC2 = cajorls(eigen2, r=1) 
+VEC2
+
+#Con esta funci?n obtenemos el vector de cointegraci?n normalizado
+coefB(VEC2)
+
+#Con esta funci?n obtenemos los coeficientes de velocidad de ajuste
+coefA(VEC2)
+
+#No rechazo la hip?tesis nula, por lo que no se debe incluir constante en el vector de cointegraci?n.
+lttest(eigen2, r=1)  
+
+# Convertir el vec a var ####
+VAR.oil = vec2var(eigen1, r = 1)
+VAR.oil
+
+length(i_3m)/4 #62
+# Validar supuestos ####
+P.62=serial.test(VAR.oil, lags.pt = 62, type = "PT.asymptotic");P.62 #No rechazo, se cumple el supuesto
+P.50=serial.test(VAR.oil, lags.pt = 50, type = "PT.asymptotic");P.50 #No rechazo, se cumple el supuesto
+P.40=serial.test(VAR.oil, lags.pt = 40, type = "PT.asymptotic");P.40  #No rechazo, se cumple el supuesto
+P.30=serial.test(VAR.oil, lags.pt = 30, type = "PT.asymptotic");P.30 #rechazo, no se cumple el supuesto
+
+
+plot(P.40, names = "i_3m") #Bien comportados, salvo por los residuales al cuadrado
+plot(P.40, names = "i_1y")
+
+#Homocedasticidad: Test tipo ARCH multivariado
+arch.test(VAR.oil, lags.multi = 24, multivariate.only = TRUE) #Rechazo, no se cumple el supuesto.
+arch.test(VAR.oil, lags.multi = 12, multivariate.only = TRUE) #Rechazo, no se cumple el supuesto
+arch.test()
+##Test Jarque-Bera multivariado
+normality.test(VAR.oil) #Rechazo, no se cumple el supuesto. 
