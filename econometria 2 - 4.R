@@ -44,6 +44,9 @@ plot(merge(as.zoo(Y_1), as.zoo(Y_2)),
      ylab="serie",
      ylim=c(-5,6),
      main="Series simuladas")
+legend("topright",   c( "Y_1","Y_2"),col = c("red", "blue"), pch=15, inset = .02)
+
+help("plot")
 ##Pruebas de raíz unitaria
 summary(ur.df(Y_1, lags=8, selectlags = "AIC", type = "trend"))
 ## La tendencia y deriva son significativas, aunque graficamente parece no tener tendencia 
@@ -55,6 +58,7 @@ summary(ur.df(Y_2, lags=8, selectlags = "AIC", type = "trend"))
 ##por tanto hacemos ambas pruebas 
 summary(ur.df(Y_1, lags=8, selectlags = "AIC", type = "drift"))
 ##confirmamos que la serie es I(0)
+
 ##Creamos modelo VAR
 Y<-cbind(Y_1,Y_2)
 VARselect(Y, lag.max = 8, type = "both", season = NULL)## 3 rezagos
