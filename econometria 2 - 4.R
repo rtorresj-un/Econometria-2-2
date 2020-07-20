@@ -50,14 +50,18 @@ help("plot")
 ##Pruebas de raíz unitaria
 summary(ur.df(Y_1, lags=8, selectlags = "AIC", type = "trend"))
 ## La tendencia y deriva son significativas, aunque graficamente parece no tener tendencia 
+
 ##por tanto hacemos ambas pruebas 
-summary(ur.df(Y_1, lags=8, selectlags = "AIC", type = "drift"))
+summary(ur.df(Y_1, lags=8, selectlags = "AIC", type = "drift")
+summary(ur.df(Y_1, lags=8, selectlags = "AIC", type = "none"))
 ##confirmamos que la serie es I(0)
 summary(ur.df(Y_2, lags=8, selectlags = "AIC", type = "trend"))
 ## La tendencia y deriva son significativas, aunque graficamente parece no tener tendencia 
 ##por tanto hacemos ambas pruebas 
 summary(ur.df(Y_1, lags=8, selectlags = "AIC", type = "drift"))
+summary(ur.df(Y_1, lags=8, selectlags = "AIC", type = "none"))
 ##confirmamos que la serie es I(0)
+
 
 ##Creamos modelo VAR
 Y<-cbind(Y_1,Y_2)
