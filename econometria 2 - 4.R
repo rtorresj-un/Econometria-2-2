@@ -2,27 +2,161 @@
 #######Paquetes
 install.packages("vars")
 install.packages("svars")
-library(vars)
-library(urca)
-library(ggplot2)
-library(ggfortify)
-library(gridExtra)
-library(dplyr)
-library(tidyr)
-library(svars)
-library(AER)
-library(dynlm)
-library(readr)
-library(tsDyn)
-library(VAR.etp)
-#########################################################################
-#########Punto 1
+install.packages('tsDyn')
+library(vars);library(urca);library(ggplot2); library(tsDyn)
+library(ggfortify);library(gridExtra);library(dplyr)
+library(tidyverse);library(svars);library(AER); library(ggthemes)
+library(dynlm);library(readr);library(tsDyn);library(VAR.etp)
 
+####EJECUTAR ESTAS FUNCIONES################################################
+# This R function helps to interpret the output of the urca::ur.df function.
+interp_urdf <- function(urdf, level) {
+        if(class(urdf) != "ur.df") stop('parameter is not of class ur.df from urca package')
+        if(!(level %in% c("1pct", "5pct", "10pct") ) ) stop('parameter level is not one of 1pct, 5pct, or 10pct')
+        
+        cat("========================================================================\n")
+        cat( paste("At the", level, "level:\n") )
+        if(urdf@model == "none") {
+                cat("The model is of type none\n")
+                tau1_crit = urdf@cval["tau1",level]
+                tau1_teststat = urdf@teststat["statistic","tau1"]
+                tau1_teststat_wi_crit = tau1_teststat > tau1_crit
+                if(tau1_teststat_wi_crit) {
+                        cat("tau1: The null hypothesis is not rejected, unit root is present\n")
+                } else {
+                        cat("tau1: The null hypothesis is rejected, unit root is not present\n")
+                }
+        } else if(urdf@model == "drift") {
+                cat("The model is of type drift\n")
+                tau2_crit = urdf@cval["tau2",level]
+                tau2_teststat = urdf@teststat["statistic","tau2"]
+                tau2_teststat_wi_crit = tau2_teststat > tau2_crit
+                phi1_crit = urdf@cval["phi1",level]
+                phi1_teststat = urdf@teststat["statistic","phi1"]
+                phi1_teststat_wi_crit = phi1_teststat < phi1_crit
+                if(tau2_teststat_wi_crit) {
+                        # Unit root present branch
+                        cat("tau2: The first null hypothesis is not rejected, unit root is present\n")
+                        if(phi1_teststat_wi_crit) {
+                                cat("phi1: The second null hypothesis is not rejected, unit root is present\n")
+                                cat("      and there is no drift.\n")
+                        } else {
+                                cat("phi1: The second null hypothesis is rejected, unit root is present\n")
+                                cat("      and there is drift.\n")
+                        }
+                } else {
+                        # Unit root not present branch
+                        cat("tau2: The first null hypothesis is rejected, unit root is not present\n")
+                        if(phi1_teststat_wi_crit) {
+                                cat("phi1: The second null hypothesis is not rejected, unit root is present\n")
+                                cat("      and there is no drift.\n")
+                                warning("This is inconsistent with the first null hypothesis.")
+                        } else {
+                                cat("phi1: The second null hypothesis is rejected, unit root is not present\n")
+                                cat("      and there is drift.\n")
+                        }
+                }
+        } else if(urdf@model == "trend") {
+                cat("The model is of type trend\n")
+                tau3_crit = urdf@cval["tau3",level]
+                tau3_teststat = urdf@teststat["statistic","tau3"]
+                tau3_teststat_wi_crit = tau3_teststat > tau3_crit
+                phi2_crit = urdf@cval["phi2",level]
+                phi2_teststat = urdf@teststat["statistic","phi2"]
+                phi2_teststat_wi_crit = phi2_teststat < phi2_crit
+                phi3_crit = urdf@cval["phi3",level]
+                phi3_teststat = urdf@teststat["statistic","phi3"]
+                phi3_teststat_wi_crit = phi3_teststat < phi3_crit
+                if(tau3_teststat_wi_crit) {
+                        # First null hypothesis is not rejected, Unit root present branch
+                        cat("tau3: The first null hypothesis is not rejected, unit root is present\n")
+                        if(phi3_teststat_wi_crit) {
+                                # Second null hypothesis is not rejected
+                                cat("phi3: The second null hypothesis is not rejected, unit root is present\n")
+                                cat("      and there is no trend\n")
+                                if(phi2_teststat_wi_crit) {
+                                        # Third null hypothesis is not rejected
+                                        # a0-drift = gamma = a2-trend = 0
+                                        cat("phi2: The third null hypothesis is not rejected, unit root is present\n")
+                                        cat("      there is no trend, and there is no drift\n")
+                                } else {
+                                        # Third null hypothesis is rejected
+                                        cat("phi2: The third null hypothesis is rejected, unit root is present\n")
+                                        cat("      there is no trend, and there is drift\n")
+                                }
+                        }
+                        else {
+                                # Second null hypothesis is rejected
+                                cat("phi3: The second null hypothesis is rejected, unit root is present\n")
+                                cat("      and there is trend\n")
+                                if(phi2_teststat_wi_crit) {
+                                        # Third null hypothesis is not rejected
+                                        # a0-drift = gamma = a2-trend = 0
+                                        cat("phi2: The third null hypothesis is not rejected, unit root is present\n")
+                                        cat("      there is no trend, and there is no drift\n")
+                                        warning("This is inconsistent with the second null hypothesis.")
+                                } else {
+                                        # Third null hypothesis is rejected
+                                        cat("phi2: The third null hypothesis is rejected, unit root is present\n")
+                                        cat("      there is trend, and there may or may not be drift\n")
+                                        warning("Presence of drift is inconclusive.")
+                                }
+                        }
+                } else {
+                        # First null hypothesis is rejected, Unit root not present branch
+                        cat("tau3: The first null hypothesis is rejected, unit root is not present\n")
+                        if(phi3_teststat_wi_crit) {
+                                cat("phi3: The second null hypothesis is not rejected, unit root is present\n")
+                                cat("      and there is no trend\n")
+                                warning("This is inconsistent with the first null hypothesis.")
+                                if(phi2_teststat_wi_crit) {
+                                        # Third null hypothesis is not rejected
+                                        # a0-drift = gamma = a2-trend = 0
+                                        cat("phi2: The third null hypothesis is not rejected, unit root is present\n")
+                                        cat("      there is no trend, and there is no drift\n")
+                                        warning("This is inconsistent with the first null hypothesis.")
+                                } else {
+                                        # Third null hypothesis is rejected
+                                        cat("phi2: The third null hypothesis is rejected, unit root is not present\n")
+                                        cat("      there is no trend, and there is drift\n")
+                                }
+                        } else {
+                                cat("phi3: The second null hypothesis is rejected, unit root is not present\n")
+                                cat("      and there may or may not be trend\n")
+                                warning("Presence of trend is inconclusive.")
+                                if(phi2_teststat_wi_crit) {
+                                        # Third null hypothesis is not rejected
+                                        # a0-drift = gamma = a2-trend = 0
+                                        cat("phi2: The third null hypothesis is not rejected, unit root is present\n")
+                                        cat("      there is no trend, and there is no drift\n")
+                                        warning("This is inconsistent with the first and second null hypothesis.")
+                                } else {
+                                        # Third null hypothesis is rejected
+                                        cat("phi2: The third null hypothesis is rejected, unit root is not present\n")
+                                        cat("      there may or may not be trend, and there may or may not be drift\n")
+                                        warning("Presence of trend and drift is inconclusive.")
+                                }
+                        }
+                }
+        } else warning('urdf model type is not one of none, drift, or trend')
+        cat("========================================================================\n")
+}
+#Función para graficar impulso respuesta con bootstraping
+irf_ggplot<-function(VAR, impulso, respuesta){
+        IRF = irf(VAR, impulse=impulso ,response=respuesta,n.ahead = 10,ci = 0.95, boot=T, ortho=T) #No analizaremos respuestas ortogonales (Ahora vemos qué es eso);  
+        data_irf= data.frame(IRF$irf,IRF$Lower,IRF$Upper, c(0:10))
+        ggplot(data_irf, aes(x=data_irf[,4], y=data_irf[,1])) +
+                geom_line() + 
+                geom_ribbon(aes(ymin=data_irf[,2], ymax=data_irf[,3], fill="Bandas al 95% \n de confianza"), alpha=.3) +
+                theme_minimal() + scale_color_distiller() + scale_fill_ordinal(name='') +
+                ylab("Porcentaje de cambio") +
+                xlab("Pasos adelante") + ggtitle(str_c('Respuesta de ',as.character(colnames(data_irf)[1]), ' ante cambios en ', impulso))
+}
+############################################################################
 
+####Punto 1####
 
-
-#############################################################################
-#########Punto 2
+####Punto 2####
 Datos<-read.csv(file.choose())
 Y_1<-ts(Datos$y1)
 Y_2<-ts(Datos$y2)
@@ -198,51 +332,73 @@ Y~a_1*L(Y, 1)+a_2*L(Y,2)+a_3*L(Y,3)+Er
 
 
 
-##########################################################################################################
-#########Punto 3
-UK<-data.frame(UK_4 <- read_delim(file.choose(),";", escape_double = FALSE, trim_ws = TRUE))
+####Punto 3####
+UK<-data.frame(UK_4 <- read.csv(file.choose(),sep=";"))
 i_3m<-ts(UK$i_3m, start=2000, frequency = 12)
 i_1y<-ts(UK$i_1y, start=2000, frequency = 12)
 i_5y<-ts(UK$i_5y, start=2000, frequency = 12)
 Date_4<-as.Date(UK$Date4, format = '%d/%m/%y')
-x11()
 autoplot(cbind(i_3m, i_1y, i_5y), facets = F, main="Tasas de intrés UK", xlab="", ylab="", size=1)
+
 ## Pruebas de raíz unitaria 
-summary(ur.df(i_3m,type = 'trend', selectlags = 'AIC'))
-summary(ur.df(i_3m,type = 'drift', selectlags = 'AIC'))
-summary(ur.df(i_3m,type = 'none', selectlags = 'AIC'))
+summary(ur.df(i_3m,type = 'trend', selectlags = 'AIC')); interp_urdf(ur.df(i_3m,type = 'trend', selectlags = 'AIC'),level = "1pct")
+summary(ur.df(i_3m,type = 'drift', selectlags = 'AIC'));interp_urdf(ur.df(i_3m,type = 'drift', selectlags = 'AIC'),level = "1pct")
+summary(ur.df(i_3m,type = 'none', selectlags = 'AIC'));interp_urdf(ur.df(i_3m,type = 'none', selectlags = 'AIC'),level = "1pct")
+summary(ur.df(diff(i_3m),type = 'none', selectlags = 'AIC'));interp_urdf(ur.df(diff(i_3m),type = 'none', selectlags = 'AIC'),level = "1pct")
 
-summary(ur.df(i_1y,type = 'trend', selectlags = 'AIC'))
-summary(ur.df(i_1y,type = 'drift', selectlags = 'AIC'))
-summary(ur.df(i_1y,type = 'none', selectlags = 'AIC'))
+summary(ur.df(i_1y,type = 'trend', selectlags = 'AIC'));interp_urdf(ur.df(i_1y,type = 'trend', selectlags = 'AIC'),level = "1pct")
+summary(ur.df(i_1y,type = 'drift', selectlags = 'AIC'));interp_urdf(ur.df(i_1y,type = 'drift', selectlags = 'AIC'),level = "1pct")
+summary(ur.df(i_1y,type = 'none', selectlags = 'AIC'));interp_urdf(ur.df(i_1y,type = 'none', selectlags = 'AIC'),level = "1pct")
+summary(ur.df(diff(i_1y),type = 'none', selectlags = 'AIC'));interp_urdf(ur.df(diff(i_1y),type = 'none', selectlags = 'AIC'),level = "1pct")
 
-summary(ur.pp(i_3m,model=c("trend"), type=c("Z-tau")))
-summary(ur.pp(i_1y,model=c("trend"), type=c("Z-tau")))
-summary(ur.pp(diff(i_3m),model=c("constant"), type=c("Z-tau")))
-summary(ur.pp(diff(i_1y),model=c("constant"), type=c("Z-tau")))
+summary(ur.pp(i_3m,model=c("constant"), type=c("Z-tau"), use.lag = 2))#ho: no estacionariedad
+summary(ur.pp(i_1y,model=c("constant"), type=c("Z-tau"), use.lag = 2))#ho: no estacionariedad
+summary(ur.pp(diff(i_3m),model=c("constant"), type=c("Z-tau"), use.lag = 2))#ho: no estacionariedad
+summary(ur.pp(diff(i_1y),model=c("constant"), type=c("Z-tau"), use.lag = 2))#ho: no estacionariedad
 
-summary(ur.kpss(i_3m, type=c("tau")))#ho: estacionariedad
-summary(ur.kpss(i_1y, type=c("tau")))#ho: estacionariedad
-summary(ur.kpss(diff(i_3m), type=c("tau")))#ho: estacionariedad
-summary(ur.kpss(diff(i_1y), type=c("tau")))#ho: estacionariedad
+summary(ur.kpss(i_3m, type=c("mu"), use.lag = 2))#ho: estacionariedad
+summary(ur.kpss(i_1y, type=c("mu"), use.lag = 2))#ho: estacionariedad
+summary(ur.kpss(diff(i_3m), type=c("mu"), use.lag = 2))#ho: estacionariedad
+summary(ur.kpss(diff(i_1y), type=c("mu"), use.lag = 2))#ho: estacionariedad
+
+summary(ur.ers(i_3m, type = c("DF-GLS"), model = c("constant"), lag.max = 2))
+summary(ur.ers(i_1y, type = c("DF-GLS"), model = c("constant"), lag.max = 2))
+summary(ur.ers(diff(i_3m), type = c("DF-GLS"), model = c("constant"), lag.max = 2))
+summary(ur.ers(diff(i_1y), type = c("DF-GLS"), model = c("constant"), lag.max = 2))
+
+i.Y<-cbind(i_3m,i_1y)
+residplot1<-data.frame(time=Date_4, variable = c(i_1y-i_3m))
+ggplot(residplot1,aes(time,variable)) + geom_line(aes(color="Spread 1Y-3M")) +
+        geom_line(data = UK, aes(Date_4, i_3m, color="3M")) +
+        geom_line(data= UK, aes(Date_4, i_1y, color="1Y"))+
+        geom_ribbon(aes(ymin = i_3m, ymax = i_1y, fill="Spread 1Y-3M"), alpha = .3) + 
+        theme_minimal() + scale_color_stata() + xlab('') + ylab('')+
+        labs(color='Series') + scale_fill_stata(name='') +
+        theme(legend.position="bottom")
+
+d_0810<-rep(0,247)
+d_0810[106:247]<-1
+d_exo<-cbind(d_0810, NULL)
+
+VARselect(i.Y, lag.max = 30, type = "both")$selection
+VARselect(i.Y, lag.max = 30, type = "both")$criteria
 
 ## TEST DE JOHANSEN
-i.Y<-cbind(i_3m,i_1y)
-eigen1 = ca.jo(i.Y, ecdet = "none", type = "eigen", K = 2, spec = "longrun",season = NULL)
+eigen1 = ca.jo(i.Y, ecdet = "none", type = "eigen", K = 7, spec = "longrun",season = NULL)
 summary(eigen1)
 ##Al 5% hay una relación de cointegración
 ## CRITERIO DE LA TRAZA
-trace1= ca.jo(i.Y, ecdet = "none", type = "trace", K = 2, spec = "longrun",season = NULL)
+trace1= ca.jo(i.Y, ecdet = "none", type = "trace", K = 7, spec = "longrun",season = NULL, dumvar = d_exo)
 summary(trace1) 
 #Al 5% de confianza las series están cointegradas.
 ####TEST CON TÉMINOS DETERMINISTICOS
-eigen2 = ca.jo(i.Y, ecdet = "const", type = "eigen", K = 2, spec = "longrun",season = NULL)
-summary(eigen2) #Al 5% de confianza las series est?n cointegradas.
-
-trace2 = ca.jo(i.Y, ecdet = "const", type = "trace", K = 2, spec = "longrun",season = NULL)
-summary(trace2) #Al 5% de confianza las series est?n cointegradas.
+#eigen2 = ca.jo(i.Y, ecdet = "const", type = "eigen", K = 7, spec = "longrun",season = NULL)
+#summary(eigen2) #Al 5% de confianza las series est?n cointegradas.
+#
+#trace2 = ca.jo(i.Y, ecdet = "const", type = "trace", K = 7, spec = "longrun",season = NULL)
+#summary(trace2) #Al 5% de confianza las series est?n cointegradas.
 ####Estimación de modelos VEC Sin términos deterministicos 
-Vec = cajorls(eigen1, r=1) 
+Vec = cajorls(trace1, r=1) 
 Vec
 coefB(Vec)
 coefA(Vec)
@@ -255,11 +411,33 @@ coefA(Vec.det)
 lttest(eigen2, r=1)
 # Cómo no se rechaza Ho, no incluimos la tendencia 
 ###Modelo VAR
-VARi<-vec2var(eigen1, r=1)
+VARi<-vec2var(trace1, r=1)
 VARi
 #########Validación de supuestos 
 
+P.62=serial.test(VARi, lags.pt = 62, type = "PT.asymptotic");P.62 #No rechazo, se cumple el supuesto
+P.50=serial.test(VARi, lags.pt = 50, type = "PT.asymptotic");P.50 #No rechazo, se cumple el supuesto
+P.40=serial.test(VARi, lags.pt = 40, type = "PT.asymptotic");P.40  #No rechazo, se cumple el supuesto
+P.30=serial.test(VARi, lags.pt = 30, type = "PT.asymptotic");P.30 #rechazo, no se cumple el supuesto
 
+plot(P.40, names = "i_3m") #Bien comportados, salvo por los residuales al cuadrado
+plot(P.40, names = "i_1y")
+
+#Homocedasticidad: Test tipo ARCH multivariado
+arch.test(VARi, lags.multi = 60) #Rechazo, no se cumple el supuesto.
+arch.test(VARi, lags.multi = 40) #Rechazo, no se cumple el supuesto
+ArchTest(resid(VARi), lags = 40)
+##Test Jarque-Bera multivariado
+normality.test(VARi) #Rechazo, no se cumple el supuesto. 
+eigen(VARi$A$A1)
+VAR2 <- VAR(i.Y, p= 7, type="none", season=NULL, exogen = d_exo)
+plot(stability(VAR2))
+summary(VAR2)
+#Impulso respuesta
+grid.arrange(
+        irf_ggplot(VARi, 'i_3m', 'i_3m'),
+        irf_ggplot(VARi, 'i_3m', 'i_1y'), ncol=2
+)
 
 
 ### 
