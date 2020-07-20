@@ -351,7 +351,8 @@ P.75=serial.test(VAR3_1, lags.pt = 75, type = "PT.asymptotic");P.75 #No rechazo,
 P.30=serial.test(VAR3_1, lags.pt = 30, type = "PT.asymptotic");P.30 #No rechazo, se cumple el supuesto
 P.20=serial.test(VAR3_1, lags.pt = 20, type = "PT.asymptotic");P.20  #No rechazo, se cumple el supuesto
 P.10=serial.test(VAR3_1, lags.pt = 10, type = "PT.asymptotic");P.10 #No rechazo, se cumple el supuesto
-#Vemos las gráficas ACF y PACF
+stargazer(P.75,P.30,P.20,P.10, c("70","30","20","10"))#Vemos las gráficas ACF y PACF
+help("serial.test")
 x11()
 plot(P.30, names = "Series.1") 
 plot(P.30, names = "Series.2") 
