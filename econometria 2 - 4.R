@@ -286,6 +286,24 @@ roots(V.dr.1)
 roots(V.no.1)
 Acoef(V.dr.1)
 
+P.75.1=serial.test(V.dr.1, lags.pt = 50, type = "PT.asymptotic");P.75.1 #No rechazo, se cumple el supuesto
+P.30.1=serial.test(V.dr.1, lags.pt = 30, type = "PT.asymptotic");P.30.1 #No rechazo, se cumple el supuesto
+P.20.1=serial.test(V.dr.1, lags.pt = 20, type = "PT.asymptotic");P.20.1  #No rechazo, se cumple el supuesto
+
+x11()
+plot(P.20.1, names = "Diff_ipc") #Relativamente Bien comportados, salvo por normalidad
+plot(P.20.1, names = "Diff_DE") #Relativamente Bien comportados, salvo por normalidad.
+
+#Homocedasticidad: Test tipo ARCH multivariado
+vars::arch.test(V.dr.1, lags.multi = 24, multivariate.only = TRUE) #se cumple el supuesto.
+vars::arch.test(V.dr.1, lags.multi = 12, multivariate.only = TRUE) #se cumple el supuesto
+
+##Test Jarque-Bera multivariado
+normality.test(V.dr.1) #rechazo, no se cumple el supuesto. 
+
+x11()
+predict(V.dr.1, n.ahead = 12) 
+autoplot(predict(V.dr.1, n.ahead = 12)) 
 
 
 
