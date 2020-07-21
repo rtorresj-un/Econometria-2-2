@@ -4,7 +4,7 @@ install.packages("vars")
 install.packages("svars")
 install.packages('tsDyn')
 library(vars);library(urca);library(ggplot2); library(tsDyn)
-library(ggfortify);library(gridExtra);library(dplyr)
+library(ggfortify);library(gridExtra);library(dplyr);library(svars)
 library(tidyverse);library(svars);library(AER); library(ggthemes)
 library(dynlm);library(readr);library(tsDyn);library(VAR.etp)
 
@@ -155,18 +155,11 @@ irf_ggplot<-function(VAR, impulso, respuesta){
 ############################################################################
 
 ####Punto 1####
-###############################
-VAR INFLACION DESEMPLEO ALEMANIA 1991- 2020 
-353 OBSERVACIONES 1991-01 ; 2020-05
-###############################
-
-#Harmonised Index of Consumer Prices (HICP) #####
-ipc_ajustado <- read_csv("C:/Users/USUARIO/Downloads/ipc_ajustado.csv", 
-                         +     col_names = FALSE)
-attach(ipc_ajustado)
+#Harmonised Index of Consumer Prices (HICP)
+Data_1 <- read_csv(file.choose())
+attach(Data_1)
 Date1<-as.Date(Date, format = '%d/%m/%Y')
-IPC_DE<-ts(data.frame(ipc_ajustado)$X2[(1:353)], frequency = 12, start = 1991)
-View(IPC_DE)
+IPC_DE<-ts(data.frame(Data_1)$IPC_DE, frequency = 12, start = 2000)
 
 #Descripción de IPC
 summary(IPC_DE); kurtosis(IPC_DE)
@@ -186,16 +179,8 @@ grid.arrange(
 )
 #Es necesario diferenciar la serie.
 Diff_ipc<- diff(IPC_DE)
-grid.arrange(
-        autoplot(Diff_ipc, col = "midnightblue")
-)  
-monthplot(Diff, col = "midnightblue")
-
-# Gráfico de autocorrelación simple y parcial diff 
-grid.arrange(
-        ggAcf(Diff_ipc,lag.max=64,plot=T,lwd=2,xlab='',main='ACF del difIPC', ylim=c(-1,1)),
-        ggPacf(Diff_ipc,lag.max=64,plot=T,lwd=2,xlab='',main='PACF del difIPC', ylim=c(-1,1))
-)
+autoplot(Diff_ipc, col = "midnightblue")
+monthplot(Diff_ipc, col = "midnightblue")
 
 #Pruebas de raiz unitaria
 summary(ur.df(IPC_DE,type = 'trend', selectlags = 'AIC'));interp_urdf(ur.df(IPC_DE,type = 'trend'),level = "5pct")
@@ -204,21 +189,12 @@ summary(ur.df(IPC_DE,type = 'none'));interp_urdf(ur.df(IPC_DE,type = 'none'),lev
 
 summary(ur.df(Diff_ipc,type = 'trend', selectlags = 'AIC'));interp_urdf(ur.df(Diff_ipc,type = 'trend'),level = "5pct")
 summary(ur.df(Diff_ipc,type = 'drift', selectlags = 'AIC'));interp_urdf(ur.df(Diff_ipc,type = 'drift'),level = "5pct") #caminata aleatoria con deriva
-summary(ur.df(Diff,type = 'none', selectlags = 'AIC'));interp_urdf(ur.df(Diff,type = 'none'),level = "5pct")
+summary(ur.df(Diff_ipc,type = 'none', selectlags = 'AIC'));interp_urdf(ur.df(Diff_ipc,type = 'none'),level = "5pct")
 
 # Serie tiene tendencia lineal, se realiza la prueba df con tendencia y no hay presencia de raiz unitaria 
 
-
-
-
-
-
 # Harmonized Unemployment Rate: Total: All Persons for Germany, Percent, Seasonally Adjusted ####
-Data_2<-read_excel(file.choose())
-attach(Data_2)
-D_DE<-ts(data.frame(Data_2)$desempleo, frequency = 12, start = 1991)
-
-
+D_DE<-ts(data.frame(Data_1)$UN_DE, frequency = 12, start = 2000)
 #Descripción de IPC
 summary(D_DE); kurtosis(D_DE)
 start(D_DE); end(D_DE)
@@ -243,21 +219,8 @@ Diff_DE<-diff(D_DE)
 
 # Gráfico serie en primera diferencia y diferencia de los log
 #Al aplicar log se logra estabilizar la varianza
-grid.arrange(
-        autoplot(Diff_DE, col = "midnightblue")
-)  
+autoplot(Diff_DE, colour = 'midnightblue')
 monthplot(Diff_DE, col = "midnightblue")
-
-# Gráfico de autocorrelación simple y parcial diff log
-#claro componente estacional cada 12 periodo
-grid.arrange(
-        ggAcf(Diff_DE,lag.max=64,plot=T,lwd=2,xlab='',main='ACF dif Desempleo', ylim=c(-1,1)),
-        ggPacf(Diff_DE,lag.max=64,plot=T,lwd=2,xlab='',main='PACF dif Desempleo', ylim=c(-1,1)),
-        ggAcf(Diff_log_DE,lag.max=64,plot=T,lwd=2,xlab='',main='ACF del Desempleo diferenciado log', ylim=c(-1,1)), #el logaritmo no aporta mejoría a la autocorrelación de la serie
-        ggPacf(Diff_log_DE,lag.max=64,plot=T,lwd=2,xlab='',main='PACF del Desempleo diferenciado log', ylim=c(-1,1)),
-        ggAcf(Diff_s_DE,lag.max=64,plot=T,lwd=2,xlab='',main='ACF del Desempleo diferenciado estacional', ylim=c(-1,1)), #diferenciar la serie mejora la autocorrelación de la serie pero puede no ser necesario 
-        ggPacf(Diff_s_DE,lag.max=64,plot=T,lwd=2,xlab='',main='PACF del Desempleo diferenciado estacional', ylim=c(-1,1)) #porque el efecto persiste, puede corregirse con un SARIMA(1,0,1)(1,0,1)[12]
-)
 
 #Pruebas de raiz unitaria
 summary(ur.df(D_DE,type = 'trend', selectlags = 'AIC'));interp_urdf(ur.df(D_DE,type = 'trend'),level = "5pct")
@@ -265,48 +228,61 @@ summary(ur.df(D_DE,type = 'drift', selectlags = 'AIC'));interp_urdf(ur.df(D_DE,t
 summary(ur.df(D_DE,type = 'none'));interp_urdf(ur.df(D_DE,type = 'none'),level = "5pct") #caminata aleatoria 
 
 summary(ur.df(Diff_DE,type = 'trend', selectlags = 'AIC'));interp_urdf(ur.df(Diff_DE,type = 'trend'),level = "5pct")
-summary(ur.df(Diff_DE,type = 'drift', selectlags = 'AIC'));interp_urdf(ur.df(Diff,type = 'drift'),level = "5pct")
-summary(ur.df(Diff_DE,type = 'none', selectlags = 'AIC'));interp_urdf(ur.df(Diff,type = 'none'),level = "5pct")
+summary(ur.df(Diff_DE,type = 'drift', selectlags = 'AIC'));interp_urdf(ur.df(Diff_DE,type = 'drift'),level = "5pct")
+summary(ur.df(Diff_DE,type = 'none', selectlags = 'AIC'));interp_urdf(ur.df(Diff_DE,type = 'none'),level = "5pct")
 
-plot(Diff_DE); mean(Diff)
-
+mean(Diff)
 
 GER<-cbind(Diff_DE, Diff_ipc)
-VARselect(GER, lag.max=40,type = "none", season = NULL) # estimar var 2 o 7 
+VARselect(GER, lag.max=20,type = "none", season = NULL) # estimar var 2 o 7 
 VARselect(GER, lag.max=20,type = "const", season = NULL)# estimar var 3 o 2
 
 #VAR con sólo intercepto.
 V.dr.1= VAR(GER, p=2, type="const", season=NULL) 
 summary(V.dr.1) #El intercepto es significativo en una ecuación.
-
+roots(V.dr.1)
+Acoef(V.dr.1)
 #VAR sin términos determinísticos.
 V.no.1 = VAR(GER, p=2, type="none", season=NULL)  
 summary(V.no.1)
-roots(V.dr.1)
 roots(V.no.1)
-Acoef(V.dr.1)
+Acoef(V.no.1)
 
 P.75.1=serial.test(V.dr.1, lags.pt = 50, type = "PT.asymptotic");P.75.1 #No rechazo, se cumple el supuesto
 P.30.1=serial.test(V.dr.1, lags.pt = 30, type = "PT.asymptotic");P.30.1 #No rechazo, se cumple el supuesto
 P.20.1=serial.test(V.dr.1, lags.pt = 20, type = "PT.asymptotic");P.20.1  #No rechazo, se cumple el supuesto
 
-x11()
 plot(P.20.1, names = "Diff_ipc") #Relativamente Bien comportados, salvo por normalidad
 plot(P.20.1, names = "Diff_DE") #Relativamente Bien comportados, salvo por normalidad.
 
 #Homocedasticidad: Test tipo ARCH multivariado
-vars::arch.test(V.dr.1, lags.multi = 24, multivariate.only = TRUE) #se cumple el supuesto.
-vars::arch.test(V.dr.1, lags.multi = 12, multivariate.only = TRUE) #se cumple el supuesto
+arch.test(V.dr.1, lags.multi = 24, multivariate.only = TRUE) #se cumple el supuesto.
+arch.test(V.dr.1, lags.multi = 12, multivariate.only = TRUE) #se cumple el supuesto
 
 ##Test Jarque-Bera multivariado
 normality.test(V.dr.1) #rechazo, no se cumple el supuesto. 
 
-x11()
 predict(V.dr.1, n.ahead = 12) 
 autoplot(predict(V.dr.1, n.ahead = 12)) 
 
+grid.arrange(
+        irf_ggplot(V.dr.1, 'Diff_DE', 'Diff_DE'),
+        irf_ggplot(V.dr.1, 'Diff_DE', 'Diff_ipc'), ncol=2
+)
 
+A<- matrix(c(NA,0,NA,NA), nrow = 2)
+SV.dr.1<-SVAR(V.dr.1,estmethod = 'scoring', Amat = A, Bmat = NULL)
+summary(SV.dr.1)
 
+grid.arrange(
+        irf_ggplot(SV.dr.1, 'Diff_DE', 'Diff_DE'),
+        irf_ggplot(SV.dr.1, 'Diff_DE', 'Diff_ipc'), ncol=2
+)
+
+grid.arrange(
+        irf_ggplot(id.ngml(SV.dr.1), 'Diff_DE', 'Diff_DE'),
+        irf_ggplot(id.ngml(SV.dr.1), 'Diff_DE', 'Diff_ipc'), ncol=2
+)
 
 ####Punto 2####
 Datos<-read.csv(file.choose())
