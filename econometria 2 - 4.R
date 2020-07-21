@@ -306,17 +306,25 @@ plot(merge(as.zoo(Y_1), as.zoo(Y_2)),
      ylab="serie",
      ylim=c(-5,6),
      main="Series simuladas")
+legend("topright",   c( "Y_1","Y_2"),col = c("red", "blue"), pch=15, inset = .02)
+
+help("plot")
 ##Pruebas de raíz unitaria
 summary(ur.df(Y_1, lags=8, selectlags = "AIC", type = "trend"))
 ## La tendencia y deriva son significativas, aunque graficamente parece no tener tendencia 
+
 ##por tanto hacemos ambas pruebas 
-summary(ur.df(Y_1, lags=8, selectlags = "AIC", type = "drift"))
+summary(ur.df(Y_1, lags=8, selectlags = "AIC", type = "drift")
+summary(ur.df(Y_1, lags=8, selectlags = "AIC", type = "none"))
 ##confirmamos que la serie es I(0)
 summary(ur.df(Y_2, lags=8, selectlags = "AIC", type = "trend"))
 ## La tendencia y deriva son significativas, aunque graficamente parece no tener tendencia 
 ##por tanto hacemos ambas pruebas 
 summary(ur.df(Y_1, lags=8, selectlags = "AIC", type = "drift"))
+summary(ur.df(Y_1, lags=8, selectlags = "AIC", type = "none"))
 ##confirmamos que la serie es I(0)
+
+
 ##Creamos modelo VAR
 Y<-cbind(Y_1,Y_2)
 VARselect(Y, lag.max = 8, type = "both", season = NULL)## 3 rezagos
@@ -337,7 +345,8 @@ P.75=serial.test(VAR3_1, lags.pt = 75, type = "PT.asymptotic");P.75 #No rechazo,
 P.30=serial.test(VAR3_1, lags.pt = 30, type = "PT.asymptotic");P.30 #No rechazo, se cumple el supuesto
 P.20=serial.test(VAR3_1, lags.pt = 20, type = "PT.asymptotic");P.20  #No rechazo, se cumple el supuesto
 P.10=serial.test(VAR3_1, lags.pt = 10, type = "PT.asymptotic");P.10 #No rechazo, se cumple el supuesto
-#Vemos las gráficas ACF y PACF
+stargazer(P.75,P.30,P.20,P.10, c("70","30","20","10"))#Vemos las gráficas ACF y PACF
+help("serial.test")
 x11()
 plot(P.30, names = "Series.1") 
 plot(P.30, names = "Series.2") 
@@ -348,6 +357,8 @@ arch.test(VAR3_1, lags.multi = 12, multivariate.only = TRUE) #No rechazo, se cum
 normality.test(VAR3_1)
 ##Pronóstico 
 fore<-predict(VAR3_1, n.ahead=5, ci=.95)
+stargazer(fore)
+help("plot")
 x11()
 plot(fore)
 help("predict")
@@ -435,7 +446,7 @@ plot(fevd(SVAR3_1, n.ahead = 24),col=c("red", "green"))
 #T_0: No hay interceptos
 #T_1:
 T_1<-as.matrix(cbind(c(-0.18291,-0.44293),c(-0.09498, -0.36287)))
-T_1
+stargazer(T_1)
 #T_2
 T_2<-as.matrix(cbind(c(-0.20118,0.07185),c(-0.34974,0.050365)))
 T_2
@@ -444,16 +455,20 @@ T_3<-as.matrix(cbind(c(-0.04237,0.02078),c(-0.05186,-0.16564)))
 T_3
 ##Inversa de A 
 InvA<-solve(SVAR3_1$A)
+InvA
 ##Obtenemos las matrices del VAR en forma reducida
 #a_1
 a_1<-InvA%*%T_1
+a_1
 #a_2
 a_2<-InvA%*%T_2
+a_2
 #a_3
 a_3<-InvA%*%T_3
+a_3
 ####EL VAR EN FORMA REDUCIDA QUEDA:
 Er<-InvA%*%SVAR3_1$Sigma.U%*%InvA 
-
+Er
 Y~a_1*L(Y, 1)+a_2*L(Y,2)+a_3*L(Y,3)+Er
 
 
