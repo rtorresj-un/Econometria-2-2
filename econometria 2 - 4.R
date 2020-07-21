@@ -143,8 +143,8 @@ interp_urdf <- function(urdf, level) {
 }
 #Función para graficar impulso respuesta con bootstraping
 irf_ggplot<-function(VAR, impulso, respuesta){
-        IRF = irf(VAR, impulse=impulso ,response=respuesta,n.ahead = 10,ci = 0.95, boot=T, ortho=T) #No analizaremos respuestas ortogonales (Ahora vemos qué es eso);  
-        data_irf= data.frame(IRF$irf,IRF$Lower,IRF$Upper, c(0:10))
+        IRF = irf(VAR, impulse=impulso ,response=respuesta,n.ahead = 15,ci=0.95, boot=T, ortho=T, runs=100) #No analizaremos respuestas ortogonales (Ahora vemos qué es eso);  
+        data_irf= data.frame(IRF$irf,IRF$Lower,IRF$Upper, c(0:15))
         ggplot(data_irf, aes(x=data_irf[,4], y=data_irf[,1])) +
                 geom_line() + 
                 geom_ribbon(aes(ymin=data_irf[,2], ymax=data_irf[,3], fill="Bandas al 95% \n de confianza"), alpha=.3) +
@@ -165,7 +165,7 @@ IPC_DE<-ts(data.frame(Data_1)$IPC_DE, frequency = 12, start = 2000)
 summary(IPC_DE); kurtosis(IPC_DE)
 start(IPC_DE); end(IPC_DE)
 #Clara tendencia de la serie
-autoplot(IPC_DE,main = "IPC Alemania (enero 1991 - abril 2020)")
+autoplot(IPC_DE,main = "IPC Alemania (enero 2000 - mayo 2020)")
 monthplot(IPC_DE, col = "midnightblue")
 #Serie estacional
 descompos = stl(IPC_DE,s.window = "periodic"); autoplot(descompos)
@@ -216,7 +216,6 @@ grid.arrange(
 #Transformaciones.
 Diff_DE<-diff(D_DE)
 
-
 # Gráfico serie en primera diferencia y diferencia de los log
 #Al aplicar log se logra estabilizar la varianza
 autoplot(Diff_DE, colour = 'midnightblue')
@@ -233,17 +232,17 @@ summary(ur.df(Diff_DE,type = 'none', selectlags = 'AIC'));interp_urdf(ur.df(Diff
 
 mean(Diff)
 
-GER<-cbind(Diff_DE, Diff_ipc)
+GER<-cbind(Diff_ipc, Diff_DE)
 VARselect(GER, lag.max=20,type = "none", season = NULL) # estimar var 2 o 7 
 VARselect(GER, lag.max=20,type = "const", season = NULL)# estimar var 3 o 2
 
 #VAR con sólo intercepto.
-V.dr.1= VAR(GER, p=2, type="const", season=NULL) 
+V.dr.1= VAR(GER, p=3, type="const", season=NULL) 
 summary(V.dr.1) #El intercepto es significativo en una ecuación.
 roots(V.dr.1)
 Acoef(V.dr.1)
 #VAR sin términos determinísticos.
-V.no.1 = VAR(GER, p=2, type="none", season=NULL)  
+V.no.1 = VAR(GER, p=3, type="none", season=NULL)  
 summary(V.no.1)
 roots(V.no.1)
 Acoef(V.no.1)
@@ -269,52 +268,22 @@ grid.arrange(
         irf_ggplot(V.dr.1, 'Diff_DE', 'Diff_DE'),
         irf_ggplot(V.dr.1, 'Diff_DE', 'Diff_ipc'), ncol=2
 )
+causality(V.dr.1, 'Diff_DE')
+causality(V.dr.1, 'Diff_ipc')
 
-A.mat  <- diag(2)
+A.mat <- diag(2)
 A.mat[1,1] <- NA # El elemento α11 es diferente de cero. .
-A.mat[2,1] <- NA #El elemento α21 es diferente de cero, de manera que la primera variable afecta de forma contemporánea a la segunda.
+A.mat[1,2] <- NA #El elemento α21 es diferente de cero, de manera que la primera variable afecta de forma contemporánea a la segunda.
 A.mat[2,2] <- NA # El elemento α22 es diferente de cero.
 print(A.mat) 
 
-SV.dr.1<-SVAR(V.dr.1,Amat = A.mat,Bmat = NULL, estmethod = "scoring", max.iter = 20000)
+SV.dr.1<-SVAR(V.dr.1,Amat = A.mat,Bmat = NULL, estmethod = "scoring")
 summary(SV.dr.1)
-SV.dr.1
 
-lags=c(0:15)
-IRF_DE_ipc = vars::irf(SV.dr.1, impulse="Diff_DE",response="Diff_ipc",n.ahead = 15,ci=0.95, boot=T, ortho=T, runs=1000) #No analizaremos respuestas ortogonales (Ahora vemos qué es eso);  
-IRF_DE_ipc.data= data.frame(IRF_DE_ipc$irf,IRF_DE_ipc$Lower,IRF_DE_ipc$Upper,lags)
-
-de_ipc <- IRF_DE_ipc.data%>% 
-        ggplot(aes(x=IRF_DE_ipc.data[,4], y=IRF_DE_ipc.data[,1], ymin=IRF_DE_ipc.data[,2], ymax=IRF_DE_ipc.data[,3] )) +
-        geom_hline(yintercept = 0, color="red") +
-        geom_ribbon(fill="grey", alpha=0.2) +
-        geom_line() +
-        theme_light() +
-        ggtitle("Imp. del Desempleo - resp. del IPC")+
-        ylab("%")+
-        xlab("pasos adelante") +
-        theme(plot.title = element_text(size = 11, hjust=0.5),
-              axis.title.y = element_text(size=11))
-de_ipc
-
-IRF_ipc_de = vars::irf(SV.dr.1, impulse="Diff_ipc",response="Diff_DE",n.ahead = 15,ci=0.95, boot=T, ortho=T, runs=1000) #No analizaremos respuestas ortogonales (Ahora vemos qué es eso);  
-IRF_ipc_de.data= data.frame(IRF_ipc_de$irf,IRF_ipc_de$Lower,IRF_ipc_de$Upper,lags)
-
-ipc_de <- IRF_DE_ipc.data%>% 
-        ggplot(aes(x=IRF_ipc_de.data[,4], y=IRF_ipc_de.data[,1], ymin=IRF_ipc_de.data[,2], ymax=IRF_ipc_de.data[,3] )) +
-        geom_hline(yintercept = 0, color="red") +
-        geom_ribbon(fill="grey", alpha=0.2) +
-        geom_line() +
-        theme_light() +
-        ggtitle("Imp. del IPC - resp. del Desempleo")+
-        ylab("%")+
-        xlab("pasos adelante") +
-        theme(plot.title = element_text(size = 11, hjust=0.5),
-              axis.title.y = element_text(size=11))
-
-ipc_de
-
-
+grid.arrange(
+        irf_ggplot(SV.dr.1, 'Diff_DE', 'Diff_DE'),
+        irf_ggplot(SV.dr.1, 'Diff_DE', 'Diff_ipc'), ncol=2
+)
 
 
 ####Punto 2####
@@ -347,7 +316,7 @@ summary(ur.df(Y_1, lags=8, selectlags = "AIC", type = "trend"))
 ## La tendencia y deriva son significativas, aunque graficamente parece no tener tendencia 
 
 ##por tanto hacemos ambas pruebas 
-summary(ur.df(Y_1, lags=8, selectlags = "AIC", type = "drift")
+summary(ur.df(Y_1, lags=8, selectlags = "AIC", type = "drift"))
 summary(ur.df(Y_1, lags=8, selectlags = "AIC", type = "none"))
 ##confirmamos que la serie es I(0)
 summary(ur.df(Y_2, lags=8, selectlags = "AIC", type = "trend"))
