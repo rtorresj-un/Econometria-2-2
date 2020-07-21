@@ -6,7 +6,7 @@ install.packages('tsDyn')
 library(vars);library(urca);library(ggplot2); library(tsDyn)
 library(ggfortify);library(gridExtra);library(dplyr);library(svars)
 library(tidyverse);library(svars);library(AER); library(ggthemes)
-library(dynlm);library(readr);library(tsDyn);library(VAR.etp)
+library(dynlm);library(readr);library(tsDyn);library(VAR.etp);library(forecast)
 
 ####EJECUTAR ESTAS FUNCIONES################################################
 # This R function helps to interpret the output of the urca::ur.df function.
@@ -179,7 +179,7 @@ grid.arrange(
 )
 #Es necesario diferenciar la serie.
 Diff_ipc<- diff(IPC_DE)
-autoplot(Diff_ipc, col = "midnightblue")
+autoplot(Diff_ipc)
 monthplot(Diff_ipc, col = "midnightblue")
 
 #Pruebas de raiz unitaria
@@ -270,19 +270,52 @@ grid.arrange(
         irf_ggplot(V.dr.1, 'Diff_DE', 'Diff_ipc'), ncol=2
 )
 
-A<- matrix(c(NA,0,NA,NA), nrow = 2)
-SV.dr.1<-SVAR(V.dr.1,estmethod = 'scoring', Amat = A, Bmat = NULL)
+A.mat  <- diag(2)
+A.mat[1,1] <- NA # El elemento α11 es diferente de cero. .
+A.mat[2,1] <- NA #El elemento α21 es diferente de cero, de manera que la primera variable afecta de forma contemporánea a la segunda.
+A.mat[2,2] <- NA # El elemento α22 es diferente de cero.
+print(A.mat) 
+
+SV.dr.1<-SVAR(V.dr.1,Amat = A.mat,Bmat = NULL, estmethod = "scoring", max.iter = 20000)
 summary(SV.dr.1)
+SV.dr.1
 
-grid.arrange(
-        irf_ggplot(SV.dr.1, 'Diff_DE', 'Diff_DE'),
-        irf_ggplot(SV.dr.1, 'Diff_DE', 'Diff_ipc'), ncol=2
-)
+lags=c(0:15)
+IRF_DE_ipc = vars::irf(SV.dr.1, impulse="Diff_DE",response="Diff_ipc",n.ahead = 15,ci=0.95, boot=T, ortho=T, runs=1000) #No analizaremos respuestas ortogonales (Ahora vemos qué es eso);  
+IRF_DE_ipc.data= data.frame(IRF_DE_ipc$irf,IRF_DE_ipc$Lower,IRF_DE_ipc$Upper,lags)
 
-grid.arrange(
-        irf_ggplot(id.ngml(SV.dr.1), 'Diff_DE', 'Diff_DE'),
-        irf_ggplot(id.ngml(SV.dr.1), 'Diff_DE', 'Diff_ipc'), ncol=2
-)
+de_ipc <- IRF_DE_ipc.data%>% 
+        ggplot(aes(x=IRF_DE_ipc.data[,4], y=IRF_DE_ipc.data[,1], ymin=IRF_DE_ipc.data[,2], ymax=IRF_DE_ipc.data[,3] )) +
+        geom_hline(yintercept = 0, color="red") +
+        geom_ribbon(fill="grey", alpha=0.2) +
+        geom_line() +
+        theme_light() +
+        ggtitle("Imp. del Desempleo - resp. del IPC")+
+        ylab("%")+
+        xlab("pasos adelante") +
+        theme(plot.title = element_text(size = 11, hjust=0.5),
+              axis.title.y = element_text(size=11))
+de_ipc
+
+IRF_ipc_de = vars::irf(SV.dr.1, impulse="Diff_ipc",response="Diff_DE",n.ahead = 15,ci=0.95, boot=T, ortho=T, runs=1000) #No analizaremos respuestas ortogonales (Ahora vemos qué es eso);  
+IRF_ipc_de.data= data.frame(IRF_ipc_de$irf,IRF_ipc_de$Lower,IRF_ipc_de$Upper,lags)
+
+ipc_de <- IRF_DE_ipc.data%>% 
+        ggplot(aes(x=IRF_ipc_de.data[,4], y=IRF_ipc_de.data[,1], ymin=IRF_ipc_de.data[,2], ymax=IRF_ipc_de.data[,3] )) +
+        geom_hline(yintercept = 0, color="red") +
+        geom_ribbon(fill="grey", alpha=0.2) +
+        geom_line() +
+        theme_light() +
+        ggtitle("Imp. del IPC - resp. del Desempleo")+
+        ylab("%")+
+        xlab("pasos adelante") +
+        theme(plot.title = element_text(size = 11, hjust=0.5),
+              axis.title.y = element_text(size=11))
+
+ipc_de
+
+
+
 
 ####Punto 2####
 Datos<-read.csv(file.choose())
