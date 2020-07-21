@@ -363,6 +363,8 @@ arch.test(VAR3_1, lags.multi = 12, multivariate.only = TRUE) #No rechazo, se cum
 normality.test(VAR3_1)
 ##Pronóstico 
 fore<-predict(VAR3_1, n.ahead=5, ci=.95)
+stargazer(fore)
+help("plot")
 x11()
 plot(fore)
 help("predict")
@@ -450,7 +452,7 @@ plot(fevd(SVAR3_1, n.ahead = 24),col=c("red", "green"))
 #T_0: No hay interceptos
 #T_1:
 T_1<-as.matrix(cbind(c(-0.18291,-0.44293),c(-0.09498, -0.36287)))
-T_1
+stargazer(T_1)
 #T_2
 T_2<-as.matrix(cbind(c(-0.20118,0.07185),c(-0.34974,0.050365)))
 T_2
@@ -459,16 +461,20 @@ T_3<-as.matrix(cbind(c(-0.04237,0.02078),c(-0.05186,-0.16564)))
 T_3
 ##Inversa de A 
 InvA<-solve(SVAR3_1$A)
+InvA
 ##Obtenemos las matrices del VAR en forma reducida
 #a_1
 a_1<-InvA%*%T_1
+a_1
 #a_2
 a_2<-InvA%*%T_2
+a_2
 #a_3
 a_3<-InvA%*%T_3
+a_3
 ####EL VAR EN FORMA REDUCIDA QUEDA:
 Er<-InvA%*%SVAR3_1$Sigma.U%*%InvA 
-
+Er
 Y~a_1*L(Y, 1)+a_2*L(Y,2)+a_3*L(Y,3)+Er
 
 
