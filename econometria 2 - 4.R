@@ -4,7 +4,7 @@ install.packages("vars")
 install.packages("svars")
 install.packages('tsDyn')
 library(vars);library(urca);library(ggplot2); library(tsDyn)
-library(ggfortify);library(gridExtra);library(dplyr);library(svars)
+library(ggfortify);library(gridExtra);library(dplyr)
 library(tidyverse);library(svars);library(AER); library(ggthemes)
 library(dynlm);library(readr);library(tsDyn);library(VAR.etp);library(forecast)
 
@@ -193,7 +193,7 @@ summary(ur.df(Diff_ipc,type = 'none', selectlags = 'AIC'));interp_urdf(ur.df(Dif
 
 # Serie tiene tendencia lineal, se realiza la prueba df con tendencia y no hay presencia de raiz unitaria 
 
-# Harmonized Unemployment Rate: Total: All Persons for Germany, Percent, Seasonally Adjusted ####
+# Harmonized Unemployment Rate: Total: All Persons for Germany, Percent, Seasonally Adjusted
 D_DE<-ts(data.frame(Data_1)$UN_DE, frequency = 12, start = 2000)
 #Descripción de IPC
 summary(D_DE); kurtosis(D_DE)
@@ -224,12 +224,11 @@ monthplot(Diff_DE, col = "midnightblue")
 #Pruebas de raiz unitaria
 summary(ur.df(D_DE,type = 'trend', selectlags = 'AIC'));interp_urdf(ur.df(D_DE,type = 'trend'),level = "5pct")
 summary(ur.df(D_DE,type = 'drift', selectlags = 'AIC'));interp_urdf(ur.df(D_DE,type = 'drift'),level = "5pct") 
-summary(ur.df(D_DE,type = 'none'));interp_urdf(ur.df(D_DE,type = 'none'),level = "5pct") #caminata aleatoria 
+summary(ur.df(D_DE,type = 'none', selectlags = 'AIC'));interp_urdf(ur.df(D_DE,type = 'none'),level = "5pct") #caminata aleatoria 
 
 summary(ur.df(Diff_DE,type = 'trend', selectlags = 'AIC'));interp_urdf(ur.df(Diff_DE,type = 'trend'),level = "5pct")
 summary(ur.df(Diff_DE,type = 'drift', selectlags = 'AIC'));interp_urdf(ur.df(Diff_DE,type = 'drift'),level = "5pct")
 summary(ur.df(Diff_DE,type = 'none', selectlags = 'AIC'));interp_urdf(ur.df(Diff_DE,type = 'none'),level = "5pct")
-
 mean(Diff)
 
 GER<-cbind(Diff_ipc, Diff_DE)
@@ -237,39 +236,39 @@ VARselect(GER, lag.max=20,type = "none", season = NULL) # estimar var 2 o 7
 VARselect(GER, lag.max=20,type = "const", season = NULL)# estimar var 3 o 2
 
 #VAR con sólo intercepto.
-V.dr.1= VAR(GER, p=3, type="const", season=NULL) 
-summary(V.dr.1) #El intercepto es significativo en una ecuación.
-roots(V.dr.1)
-Acoef(V.dr.1)
+VAR.1= VAR(GER, p=3, type="const", season=NULL) 
+summary(VAR.1) #El intercepto es significativo en una ecuación.
+roots(VAR.1)
+Acoef(VAR.1)
 #VAR sin términos determinísticos.
-V.no.1 = VAR(GER, p=3, type="none", season=NULL)  
-summary(V.no.1)
-roots(V.no.1)
-Acoef(V.no.1)
+VAR.no.1 = VAR(GER, p=3, type="none", season=NULL)  
+summary(VAR.no.1)
+roots(VAR.no.1)
+Acoef(VAR.no.1)
 
-P.75.1=serial.test(V.dr.1, lags.pt = 50, type = "PT.asymptotic");P.75.1 #No rechazo, se cumple el supuesto
-P.30.1=serial.test(V.dr.1, lags.pt = 30, type = "PT.asymptotic");P.30.1 #No rechazo, se cumple el supuesto
-P.20.1=serial.test(V.dr.1, lags.pt = 20, type = "PT.asymptotic");P.20.1  #No rechazo, se cumple el supuesto
+P.75.1=serial.test(VAR.1, lags.pt = 50, type = "PT.asymptotic");P.75.1 #No rechazo, se cumple el supuesto
+P.30.1=serial.test(VAR.1, lags.pt = 30, type = "PT.asymptotic");P.30.1 #No rechazo, se cumple el supuesto
+P.20.1=serial.test(VAR.1, lags.pt = 20, type = "PT.asymptotic");P.20.1  #No rechazo, se cumple el supuesto
 
 plot(P.20.1, names = "Diff_ipc") #Relativamente Bien comportados, salvo por normalidad
 plot(P.20.1, names = "Diff_DE") #Relativamente Bien comportados, salvo por normalidad.
 
 #Homocedasticidad: Test tipo ARCH multivariado
-arch.test(V.dr.1, lags.multi = 24, multivariate.only = TRUE) #se cumple el supuesto.
-arch.test(V.dr.1, lags.multi = 12, multivariate.only = TRUE) #se cumple el supuesto
+arch.test(VAR.1, lags.multi = 50, multivariate.only = TRUE)
+arch.test(VAR.1, lags.multi = 24, multivariate.only = TRUE) #se cumple el supuesto.
+arch.test(VAR.1, lags.multi = 12, multivariate.only = TRUE) #se cumple el supuesto
 
 ##Test Jarque-Bera multivariado
-normality.test(V.dr.1) #rechazo, no se cumple el supuesto. 
-
-predict(V.dr.1, n.ahead = 12) 
-autoplot(predict(V.dr.1, n.ahead = 12)) 
+normality.test(VAR.1) #rechazo, no se cumple el supuesto. 
+autoplot(predict(VAR.1, n.ahead = 12)) 
 
 grid.arrange(
-        irf_ggplot(V.dr.1, 'Diff_DE', 'Diff_DE'),
-        irf_ggplot(V.dr.1, 'Diff_DE', 'Diff_ipc'), ncol=2
+        irf_ggplot(VAR.1, 'Diff_DE', 'Diff_DE'),
+        irf_ggplot(VAR.1, 'Diff_DE', 'Diff_ipc'), ncol=2
 )
-causality(V.dr.1, 'Diff_DE')
-causality(V.dr.1, 'Diff_ipc')
+
+causality(VAR.1, 'Diff_DE')
+causality(VAR.1, 'Diff_ipc')
 
 A.mat <- diag(2)
 A.mat[1,1] <- NA # El elemento α11 es diferente de cero. .
@@ -277,28 +276,27 @@ A.mat[1,2] <- NA #El elemento α21 es diferente de cero, de manera que la primer
 A.mat[2,2] <- NA # El elemento α22 es diferente de cero.
 print(A.mat) 
 
-SV.dr.1<-SVAR(V.dr.1,Amat = A.mat,Bmat = NULL, estmethod = "scoring")
-summary(SV.dr.1)
+SVAR.1<-SVAR(VAR.1,Amat = A.mat,Bmat = NULL, estmethod = "scoring")
+summary(SVAR.1)
 
 grid.arrange(
-        irf_ggplot(SV.dr.1, 'Diff_DE', 'Diff_DE'),
-        irf_ggplot(SV.dr.1, 'Diff_DE', 'Diff_ipc'), ncol=2
+        irf_ggplot(SVAR.1, 'Diff_DE', 'Diff_DE'),
+        irf_ggplot(SVAR.1, 'Diff_DE', 'Diff_ipc'), ncol=2
 )
 
 
 ####Punto 2####
-Datos<-read.csv(file.choose())
-Y_1<-ts(Datos$y1)
-Y_2<-ts(Datos$y2)
+Datos_28<-read.csv(file.choose())
+Y_1<-ts(Datos_28$y1)
+Y_2<-ts(Datos_28$y2)
 ##Descripción de las series
-summary(Datos)
+summary(Datos_28)
 autoplot(Y_1)
 autoplot(Y_2)
 var(Y_1)
 var(Y_2)
 ## vemos que la Y_2 varía mucho más que Y_1
 ##Las dos series en la misma gráfica 
-x11()
 plot(merge(as.zoo(Y_1), as.zoo(Y_2)), 
      col=c("red","darkblue"),
      plot.type= "single",
@@ -310,139 +308,78 @@ plot(merge(as.zoo(Y_1), as.zoo(Y_2)),
      main="Series simuladas")
 legend("topright",   c( "Y_1","Y_2"),col = c("red", "blue"), pch=15, inset = .02)
 
-help("plot")
 ##Pruebas de raíz unitaria
-summary(ur.df(Y_1, lags=8, selectlags = "AIC", type = "trend"))
+summary(ur.df(Y_1, lags=8, selectlags = "AIC", type = "trend")); interp_urdf(ur.df(Y_1,type = 'trend'),level = "5pct")
 ## La tendencia y deriva son significativas, aunque graficamente parece no tener tendencia 
 
 ##por tanto hacemos ambas pruebas 
-summary(ur.df(Y_1, lags=8, selectlags = "AIC", type = "drift"))
-summary(ur.df(Y_1, lags=8, selectlags = "AIC", type = "none"))
+summary(ur.df(Y_1, lags=8, selectlags = "AIC", type = "drift")); interp_urdf(ur.df(Y_1,type = 'drift'),level = "5pct")
+summary(ur.df(Y_1, lags=8, selectlags = "AIC", type = "none")); interp_urdf(ur.df(Y_1,type = 'none'),level = "5pct")
 ##confirmamos que la serie es I(0)
-summary(ur.df(Y_2, lags=8, selectlags = "AIC", type = "trend"))
+summary(ur.df(Y_2, lags=8, selectlags = "AIC", type = "trend")); interp_urdf(ur.df(Y_2,type = 'trend'),level = "5pct")
 ## La tendencia y deriva son significativas, aunque graficamente parece no tener tendencia 
 ##por tanto hacemos ambas pruebas 
-summary(ur.df(Y_1, lags=8, selectlags = "AIC", type = "drift"))
-summary(ur.df(Y_1, lags=8, selectlags = "AIC", type = "none"))
+summary(ur.df(Y_1, lags=8, selectlags = "AIC", type = "drift")); interp_urdf(ur.df(Y_2,type = 'drift'),level = "5pct")
+summary(ur.df(Y_1, lags=8, selectlags = "AIC", type = "none")); interp_urdf(ur.df(Y_2,type = 'none'),level = "5pct")
 ##confirmamos que la serie es I(0)
-
 
 ##Creamos modelo VAR
 Y<-cbind(Y_1,Y_2)
 VARselect(Y, lag.max = 8, type = "both", season = NULL)## 3 rezagos
-VARselect(Y, lag.max = 8, type = "trend")##3 rezagos
+VARselect(Y, lag.max = 8, type = "const")##3 rezagos
 VARselect(Y, lag.max = 8, type= "none")## 3 rezagos
 ##Utilizaremos 3 rezagos para el VAR
-VAR3<-VAR(Y, p=3, type = "both")
-summary(VAR3)
+VAR.2.tryco<-VAR(Y, p=3, type = "both")
+summary(VAR.2.tryco)
+
+VAR.2.co<-VAR(Y, p=3, type = "const")
+summary(VAR.2.co)
 ##La tendencia y la constante no son significativas
-VAR3_1<-VAR(Y, p=3, type = "none")
-summary(VAR3_1)
+VAR.2<-VAR(Y, p=3, type = "none")
+summary(VAR.2)
 ##validación de supuestos 
 ##Estabilidad del proceso
-roots(VAR3_1)
+roots(VAR.2)
 ##El proceso es estable
 ##Autocorrelación 
-P.75=serial.test(VAR3_1, lags.pt = 75, type = "PT.asymptotic");P.75 #No rechazo, se cumple el supuesto
-P.30=serial.test(VAR3_1, lags.pt = 30, type = "PT.asymptotic");P.30 #No rechazo, se cumple el supuesto
-P.20=serial.test(VAR3_1, lags.pt = 20, type = "PT.asymptotic");P.20  #No rechazo, se cumple el supuesto
-P.10=serial.test(VAR3_1, lags.pt = 10, type = "PT.asymptotic");P.10 #No rechazo, se cumple el supuesto
+P.75=serial.test(VAR.2, lags.pt = 75, type = "PT.asymptotic");P.75 #No rechazo, se cumple el supuesto
+P.30=serial.test(VAR.2, lags.pt = 30, type = "PT.asymptotic");P.30 #No rechazo, se cumple el supuesto
+P.20=serial.test(VAR.2, lags.pt = 20, type = "PT.asymptotic");P.20  #No rechazo, se cumple el supuesto
+P.10=serial.test(VAR.2, lags.pt = 10, type = "PT.asymptotic");P.10 #No rechazo, se cumple el supuesto
 stargazer(P.75,P.30,P.20,P.10, c("70","30","20","10"))#Vemos las gráficas ACF y PACF
-help("serial.test")
-x11()
-plot(P.30, names = "Series.1") 
-plot(P.30, names = "Series.2") 
+
+plot(P.30, names = "Y_1") 
+plot(P.30, names = "Y_2") 
 ##Validamos el supuesto de homoscedasticidad 
-arch.test(VAR3_1, lags.multi = 24, multivariate.only = TRUE) #No rechazo, se cumple el supuesto.
-arch.test(VAR3_1, lags.multi = 12, multivariate.only = TRUE) #No rechazo, se cumple el supuesto
+arch.test(VAR.2, lags.multi = 24, multivariate.only = TRUE) #No rechazo, se cumple el supuesto.
+arch.test(VAR.2, lags.multi = 12, multivariate.only = TRUE) #No rechazo, se cumple el supuesto
 ##Válidamos el supuesto de normalidad
-normality.test(VAR3_1)
+normality.test(VAR.2)
 ##Pronóstico 
-fore<-predict(VAR3_1, n.ahead=5, ci=.95)
+fore<-predict(VAR.2, n.ahead=5, ci=.95)
 stargazer(fore)
-help("plot")
-x11()
-plot(fore)
-help("predict")
+
+autoplot(fore)
 ##Modelo SVAR
 ##unimos las dos series en una matriz
 ##Creamos la matriz de efectos contemporaneos 
 matrix_1=as.matrix(cbind(c(1,NA),c(NA,1)))
 matrix_1
-SVAR3_1<-SVAR(VAR3_1, Amat = matrix_1, Bmat = NULL, hessian = TRUE, method="scoring" )
-SVAR3_1
-help("SVAR")
+SVAR.2<-SVAR(VAR.2, Amat = matrix_1, Bmat = NULL, hessian = TRUE, method="scoring" )
+summary(SVAR.2)
 ##Ya queda definido el modelo con efectos contemporaneos 
 ##Impulso respuesta 
-lags=c(0:5)
 
-
-#IRF de las variables del sistema ante distintos choques exÃ³genos.
-IRF1 = irf(SVAR3_1, impulse="Y_1",response="Y_1",n.ahead = 50,ci = 0.95, ortho=F)  
-IRF1.1= data.frame(IRF1$irf,IRF1$Lower,IRF1$Upper, lags)
-IRF2 = irf(SVAR3_1, impulse="Y_1",response="Y_2",n.ahead = 50,ci=0.95, ortho=F)  
-IRF1.2= data.frame(IRF2$irf,IRF2$Lower,IRF2$Upper, lags)
-IRF3 = irf(SVAR3_1, impulse="Y_2",response="Y_1",n.ahead = 50,ci=0.95, ortho=F)   
-IRF2.1= data.frame(IRF3$irf,IRF3$Lower,IRF3$Upper, lags)
-IRF4 = irf(SVAR3_1, impulse="Y_2",response="Y_2",n.ahead = 50,ci=0.95, ortho=F)  ;
-IRF2.2= data.frame(IRF4$irf,IRF4$Lower,IRF4$Upper, lags)
-
-
-y1.y1 <- IRF1.1%>% 
-        ggplot(aes(x=IRF1.1[,4], y=IRF1.1[,1], ymin=IRF1.1[,2], ymax=IRF1.1[,3] )) +
-        geom_hline(yintercept = 0, color="red") +
-        geom_ribbon(fill="grey", alpha=0.2) +
-        geom_line() +
-        theme_light() +
-        ggtitle("Impulso de y1 - respuesta de y1")+
-        ylab("")+
-        xlab("pasos adelante") +
-        theme(plot.title = element_text(size = 11, hjust=0.5),
-              axis.title.y = element_text(size=11))
-
-y1.y2 <- IRF1.2%>% 
-        ggplot(aes(x=IRF1.2[,4], y=IRF1.2[,1], ymin=IRF1.2[,2], ymax=IRF1.2[,3] )) +
-        geom_hline(yintercept = 0, color="red") +
-        geom_ribbon(fill="grey", alpha=0.2) +
-        geom_line() +
-        theme_light() +
-        ggtitle("Impulso de y1 - respuesta de y2")+
-        ylab("")+
-        xlab("pasos adelante") +
-        theme(plot.title = element_text(size = 11, hjust=0.5),
-              axis.title.y = element_text(size=11))
-
-y2.y1 <- IRF2.1%>% 
-        ggplot(aes(x=IRF2.1[,4], y=IRF2.1[,1], ymin=IRF2.1[,2], ymax=IRF2.1[,3] )) +
-        geom_hline(yintercept = 0, color="red") +
-        geom_ribbon(fill="grey", alpha=0.2) +
-        geom_line() +
-        theme_light() +
-        ggtitle("Impulso de y2 - respuesta de y1")+
-        ylab("")+
-        xlab("pasos adelante") +
-        theme(plot.title = element_text(size = 11, hjust=0.5),
-              axis.title.y = element_text(size=11))
-
-y2.y2 <- IRF2.2%>% 
-        ggplot(aes(x=IRF2.2[,4], y=IRF2.2[,1], ymin=IRF2.2[,2], ymax=IRF2.2[,3] )) +
-        geom_hline(yintercept = 0, color="red") +
-        geom_ribbon(fill="grey", alpha=0.2) +
-        geom_line() +
-        theme_light() +
-        ggtitle("Impulso de y2 - respuesta de y2")+
-        ylab("")+
-        xlab("pasos adelante") +
-        theme(plot.title = element_text(size = 11, hjust=0.5),
-              axis.title.y = element_text(size=11))
-
-x11()
-grid.arrange(y1.y1,y1.y2,y2.y1,y2.y2,ncol=2)
+grid.arrange(
+        irf_ggplot(SVAR.2, 'Y_1', 'Y_1'),
+        irf_ggplot(SVAR.2, 'Y_1', 'Y_2'), 
+        irf_ggplot(SVAR.2, 'Y_2', 'Y_1'),
+        irf_ggplot(SVAR.2, 'Y_2', 'Y_2'), ncol=2
+)
 
 ## Descomposición de la varianza
-x11()
-fevd(SVAR3_1, n.ahead = 24)
-plot(fevd(SVAR3_1, n.ahead = 24),col=c("red", "green"))
+vardecom.2<-fevd(SVAR.2, n.ahead = 24)
+plot(vardecom.2,col=c("red", "green"))
 ##Obteniendo los parametros etimados del SVAR
 ##Creamos las matrices con los coeficientes de los rezagos del VAR
 #T_0: No hay interceptos
@@ -456,7 +393,7 @@ T_2
 T_3<-as.matrix(cbind(c(-0.04237,0.02078),c(-0.05186,-0.16564)))
 T_3
 ##Inversa de A 
-InvA<-solve(SVAR3_1$A)
+InvA<-solve(SVAR.2$A)
 InvA
 ##Obtenemos las matrices del VAR en forma reducida
 #a_1
@@ -469,51 +406,18 @@ a_2
 a_3<-InvA%*%T_3
 a_3
 ####EL VAR EN FORMA REDUCIDA QUEDA:
-Er<-InvA%*%SVAR3_1$Sigma.U%*%InvA 
+Er<-InvA%*%SVAR.2$Sigma.U%*%InvA 
 Er
 Y~a_1*L(Y, 1)+a_2*L(Y,2)+a_3*L(Y,3)+Er
-
-
-
-
 
 ####Punto 3####
 UK<-data.frame(UK_4 <- read.csv(file.choose(),sep=";"))
 i_3m<-ts(UK$i_3m, start=2000, frequency = 12)
 i_1y<-ts(UK$i_1y, start=2000, frequency = 12)
-i_5y<-ts(UK$i_5y, start=2000, frequency = 12)
 Date_4<-as.Date(UK$Date4, format = '%d/%m/%y')
-autoplot(cbind(i_3m, i_1y, i_5y), facets = F, main="Tasas de intrés UK", xlab="", ylab="", size=1)
 
-## Pruebas de raíz unitaria 
-summary(ur.df(i_3m,type = 'trend', selectlags = 'AIC')); interp_urdf(ur.df(i_3m,type = 'trend', selectlags = 'AIC'),level = "1pct")
-summary(ur.df(i_3m,type = 'drift', selectlags = 'AIC'));interp_urdf(ur.df(i_3m,type = 'drift', selectlags = 'AIC'),level = "1pct")
-summary(ur.df(i_3m,type = 'none', selectlags = 'AIC'));interp_urdf(ur.df(i_3m,type = 'none', selectlags = 'AIC'),level = "1pct")
-summary(ur.df(diff(i_3m),type = 'none', selectlags = 'AIC'));interp_urdf(ur.df(diff(i_3m),type = 'none', selectlags = 'AIC'),level = "1pct")
-
-summary(ur.df(i_1y,type = 'trend', selectlags = 'AIC'));interp_urdf(ur.df(i_1y,type = 'trend', selectlags = 'AIC'),level = "1pct")
-summary(ur.df(i_1y,type = 'drift', selectlags = 'AIC'));interp_urdf(ur.df(i_1y,type = 'drift', selectlags = 'AIC'),level = "1pct")
-summary(ur.df(i_1y,type = 'none', selectlags = 'AIC'));interp_urdf(ur.df(i_1y,type = 'none', selectlags = 'AIC'),level = "1pct")
-summary(ur.df(diff(i_1y),type = 'none', selectlags = 'AIC'));interp_urdf(ur.df(diff(i_1y),type = 'none', selectlags = 'AIC'),level = "1pct")
-
-summary(ur.pp(i_3m,model=c("constant"), type=c("Z-tau"), use.lag = 2))#ho: no estacionariedad
-summary(ur.pp(i_1y,model=c("constant"), type=c("Z-tau"), use.lag = 2))#ho: no estacionariedad
-summary(ur.pp(diff(i_3m),model=c("constant"), type=c("Z-tau"), use.lag = 2))#ho: no estacionariedad
-summary(ur.pp(diff(i_1y),model=c("constant"), type=c("Z-tau"), use.lag = 2))#ho: no estacionariedad
-
-summary(ur.kpss(i_3m, type=c("mu"), use.lag = 2))#ho: estacionariedad
-summary(ur.kpss(i_1y, type=c("mu"), use.lag = 2))#ho: estacionariedad
-summary(ur.kpss(diff(i_3m), type=c("mu"), use.lag = 2))#ho: estacionariedad
-summary(ur.kpss(diff(i_1y), type=c("mu"), use.lag = 2))#ho: estacionariedad
-
-summary(ur.ers(i_3m, type = c("DF-GLS"), model = c("constant"), lag.max = 2))
-summary(ur.ers(i_1y, type = c("DF-GLS"), model = c("constant"), lag.max = 2))
-summary(ur.ers(diff(i_3m), type = c("DF-GLS"), model = c("constant"), lag.max = 2))
-summary(ur.ers(diff(i_1y), type = c("DF-GLS"), model = c("constant"), lag.max = 2))
-
-i.Y<-cbind(i_3m,i_1y)
-residplot1<-data.frame(time=Date_4, variable = c(i_1y-i_3m))
-ggplot(residplot1,aes(time,variable)) + geom_line(aes(color="Spread 1Y-3M")) +
+spreadplot<-data.frame(time=Date_4, variable = c(i_1y-i_3m))
+ggplot(spreadplot,aes(time,variable)) + geom_line(aes(color="Spread 1Y-3M")) +
         geom_line(data = UK, aes(Date_4, i_3m, color="3M")) +
         geom_line(data= UK, aes(Date_4, i_1y, color="1Y"))+
         geom_ribbon(aes(ymin = i_3m, ymax = i_1y, fill="Spread 1Y-3M"), alpha = .3) + 
@@ -521,32 +425,102 @@ ggplot(residplot1,aes(time,variable)) + geom_line(aes(color="Spread 1Y-3M")) +
         labs(color='Series') + scale_fill_stata(name='') +
         theme(legend.position="bottom")
 
+datalogdifplot<-data.frame(time=Date_4[2:247], variable1=log(i_1y)[2:247], variable2=log(i_3m)[2:247], variable3=diff(i_1y), variable4=diff(i_3m))
+datalogdifplot2<-data.frame(time=Date_4[2:247], variable1=diff(log(i_1y)), variable2=diff(log(i_3m)))
+
+gralogdif1<-ggplot(datalogdifplot,aes(time,variable1)) +
+        geom_line(aes(time, variable4, colour="∆3M")) +
+        geom_line(aes(time, variable3, colour="∆1Y")) +
+        theme_minimal() + xlab('') + ylab('') + scale_color_manual(values=c("#AD0202AD", "#030B6EBE")) +
+        labs(color='Series')
+gralogdif2<-ggplot(datalogdifplot,aes(time,variable1)) +
+        geom_line(aes(time, variable2, colour="log3M")) +
+        geom_line(aes(colour="log1Y")) + 
+        theme_minimal() + xlab('') + ylab('') + scale_color_manual(values=c("#AD0202AD", "#030B6EBE")) +
+        labs(color='Series')
+gralogdif3<-ggplot(datalogdifplot2,aes(time,variable1)) +
+        geom_line(aes(time, variable2, colour="∆log3M"), ) +
+        geom_line(aes(colour="∆log1Y")) + 
+        theme_minimal() + xlab('') + ylab('') + scale_color_manual(values=c("#AD0202AD", "#030B6EBE")) +
+        labs(color='Series')
+
+grid.arrange(gralogdif2, gralogdif1, gralogdif3, ncol=3)
+
+## Pruebas de raíz unitaria 
+grid.arrange(
+        ggAcf(i_3m,lag.max=60,plot=T,lwd=2,xlab='',main='ACF del interés a 3 meses', ylim=c(-1,1)),
+        ggPacf(i_3m,lag.max=60,plot=T,lwd=2,xlab='',main='PACF del interés a 3 meses', ylim=c(-1,1)),
+        ggAcf(i_1y,lag.max=60,plot=T,lwd=2,xlab='',main='ACF del interés a 1 año', ylim=c(-1,1)),
+        ggPacf(i_1y,lag.max=60,plot=T,lwd=2,xlab='',main='PACF del interés a 1 año', ylim=c(-1,1)),
+        ggAcf(diff(i_3m),lag.max=60,plot=T,lwd=2,xlab='',main='ACF del interés a 3 meses diferenciado', ylim=c(-1,1)),
+        ggPacf(diff(i_3m),lag.max=60,plot=T,lwd=2,xlab='',main='PACF del interés a 3 meses diferenciado', ylim=c(-1,1)),
+        ggAcf(diff(i_1y),lag.max=60,plot=T,lwd=2,xlab='',main='ACF del interés a 1 año diferenciado', ylim=c(-1,1)),
+        ggPacf(diff(i_1y),lag.max=60,plot=T,lwd=2,xlab='',main='PACF del interés a 1 año diferenciado', ylim=c(-1,1)), 
+        ncol=2)
+
+summary(ur.df(log(i_3m),type = 'trend', selectlags = 'AIC')); interp_urdf(ur.df(i_3m,type = 'trend', selectlags = 'AIC'),level = "1pct")
+summary(ur.df(log(i_3m),type = 'drift', selectlags = 'AIC'));interp_urdf(ur.df(i_3m,type = 'drift', selectlags = 'AIC'),level = "1pct")
+summary(ur.df(log(i_3m),type = 'none', selectlags = 'AIC'));interp_urdf(ur.df(i_3m,type = 'none', selectlags = 'AIC'),level = "1pct")
+summary(ur.df(diff(i_3m),type = 'none', selectlags = 'AIC'));interp_urdf(ur.df(diff(i_3m),type = 'none', selectlags = 'AIC'),level = "1pct")
+
+summary(ur.df(log(i_1y),type = 'trend', selectlags = 'AIC'));interp_urdf(ur.df(i_1y,type = 'trend', selectlags = 'AIC'),level = "1pct")
+summary(ur.df(log(i_1y),type = 'drift', selectlags = 'AIC'));interp_urdf(ur.df(i_1y,type = 'drift', selectlags = 'AIC'),level = "1pct")
+summary(ur.df(log(i_1y),type = 'none', selectlags = 'AIC'));interp_urdf(ur.df(i_1y,type = 'none', selectlags = 'AIC'),level = "1pct")
+summary(ur.df(diff(log(i_1y)),type = 'none', selectlags = 'AIC'));interp_urdf(ur.df(diff(i_1y),type = 'none', selectlags = 'AIC'),level = "1pct")
+
+summary(ur.pp(i_3m,model=c("trend"), type=c("Z-tau"), use.lag = 10))#ho: no estacionariedad
+summary(ur.pp(i_3m,model=c("constant"), type=c("Z-tau"), use.lag = 10))#ho: no estacionariedad
+summary(ur.pp(i_1y,model=c("trend"), type=c("Z-tau"), use.lag = 10))#ho: no estacionariedad
+summary(ur.pp(i_1y,model=c("constant"), type=c("Z-tau"), use.lag = 10))#ho: no estacionariedad
+summary(ur.pp(diff(i_3m),model=c("trend"), type=c("Z-tau"), use.lag = 10))#ho: no estacionariedad
+summary(ur.pp(diff(i_3m),model=c("constant"), type=c("Z-tau"), use.lag = 10))#ho: no estacionariedad
+summary(ur.pp(diff(i_1y),model=c("trend"), type=c("Z-tau"), use.lag = 10))#ho: no estacionariedad
+summary(ur.pp(diff(i_1y),model=c("constant"), type=c("Z-tau"), use.lag = 10))#ho: no estacionariedad
+
+summary(ur.kpss(i_3m, type=c("tau"), use.lag = 10))#ho: estacionariedad
+summary(ur.kpss(i_3m, type=c("mu"), use.lag = 10))#ho: estacionariedad
+summary(ur.kpss(i_1y, type=c("tau"), use.lag = 10))#ho: estacionariedad
+summary(ur.kpss(i_1y, type=c("mu"), use.lag = 10))#ho: estacionariedad
+summary(ur.kpss(diff(i_3m), type=c("mu"), use.lag = 10))#ho: estacionariedad
+summary(ur.kpss(diff(i_1y), type=c("mu"), use.lag = 10))#ho: estacionariedad
+
+summary(ur.ers(i_3m, type = c("DF-GLS"), model = c("trend"), lag.max = 10)) #ho: no estacionariedad
+summary(ur.ers(i_3m, type = c("DF-GLS"), model = c("constant"), lag.max = 10)) #ho: no estacionariedad
+summary(ur.ers(i_1y, type = c("DF-GLS"), model = c("trend"), lag.max = 10)) #ho: no estacionariedad
+summary(ur.ers(i_1y, type = c("DF-GLS"), model = c("constant"), lag.max = 10)) #ho: no estacionariedad
+summary(ur.ers(diff(i_3m), type = c("DF-GLS"), model = c("trend"), lag.max = 10)) #ho: no estacionariedad
+summary(ur.ers(diff(i_3m), type = c("DF-GLS"), model = c("constant"), lag.max = 10)) #ho: no estacionariedad
+summary(ur.ers(diff(i_1y), type = c("DF-GLS"), model = c("trend"), lag.max = 10)) #ho: no estacionariedad
+summary(ur.ers(diff(i_1y), type = c("DF-GLS"), model = c("constant"), lag.max = 10)) #ho: no estacionariedad
+
+#Dummy de liquidez por el banco de inglaterra en octubre 2008
 d_0810<-rep(0,247)
 d_0810[106:247]<-1
 d_exo<-cbind(d_0810, NULL)
 
-VARselect(i.Y, lag.max = 30, type = "both")$selection
-VARselect(i.Y, lag.max = 30, type = "both")$criteria
+i.Y<-cbind(log(i_1y),log(i_3m))
+VARselect(i.Y, lag.max = 10, type = "const")$selection
+VARselect(i.Y, lag.max = 10, type = "const")$criteria
 
 ## TEST DE JOHANSEN
-eigen1 = ca.jo(i.Y, ecdet = "none", type = "eigen", K = 7, spec = "longrun",season = NULL)
+eigen1 = ca.jo(i.Y, ecdet = "const", type = "eigen", K = 4, spec = "longrun",season = NULL)
 summary(eigen1)
 ##Al 5% hay una relación de cointegración
 ## CRITERIO DE LA TRAZA
-trace1= ca.jo(i.Y, ecdet = "none", type = "trace", K = 7, spec = "longrun",season = NULL, dumvar = d_exo)
+trace1= ca.jo(i.Y, ecdet = "const", type = "trace", K = 4, spec = "longrun",season = NULL)
 summary(trace1) 
 #Al 5% de confianza las series están cointegradas.
-####TEST CON TÉMINOS DETERMINISTICOS
-#eigen2 = ca.jo(i.Y, ecdet = "const", type = "eigen", K = 7, spec = "longrun",season = NULL)
-#summary(eigen2) #Al 5% de confianza las series est?n cointegradas.
-#
-#trace2 = ca.jo(i.Y, ecdet = "const", type = "trace", K = 7, spec = "longrun",season = NULL)
-#summary(trace2) #Al 5% de confianza las series est?n cointegradas.
-####Estimación de modelos VEC Sin términos deterministicos 
-Vec = cajorls(trace1, r=1) 
-Vec
-coefB(Vec)
-coefA(Vec)
+###TEST CON TÉMINOS DETERMINISTICOS
+eigen2 = ca.jo(i.Y, ecdet = "trend", type = "eigen", K = 4, spec = "longrun",season = NULL)
+summary(eigen2) #Al 5% de confianza las series est?n cointegradas.
+
+trace2 = ca.jo(i.Y, ecdet = "trend", type = "trace", K = 4, spec = "longrun",season = NULL)
+summary(trace2) #Al 5% de confianza las series est?n cointegradas.
+###Estimación de modelos VEC Sin términos deterministicos 
+VECM.3 = cajorls(trace1, r=1) 
+VECM.3 <- VECM(i.Y, lag = 3, r = 1, include = c("const"), estim = "ML")
+coefB(VECM.3)
+coefA(VECM.3)
 ####Estimación VEC con términos deterministicos 
 Vec.det<-cajorls(eigen2, r=1)
 Vec.det
@@ -560,7 +534,7 @@ VARi<-vec2var(trace1, r=1)
 VARi
 #########Validación de supuestos 
 
-P.62=serial.test(VARi, lags.pt = 62, type = "PT.asymptotic");P.62 #No rechazo, se cumple el supuesto
+P.62=serial.test(VARi, lags.pt = 60, type = "PT.asymptotic");P.62 #No rechazo, se cumple el supuesto
 P.50=serial.test(VARi, lags.pt = 50, type = "PT.asymptotic");P.50 #No rechazo, se cumple el supuesto
 P.40=serial.test(VARi, lags.pt = 40, type = "PT.asymptotic");P.40  #No rechazo, se cumple el supuesto
 P.30=serial.test(VARi, lags.pt = 30, type = "PT.asymptotic");P.30 #rechazo, no se cumple el supuesto
@@ -569,21 +543,45 @@ plot(P.40, names = "i_3m") #Bien comportados, salvo por los residuales al cuadra
 plot(P.40, names = "i_1y")
 
 #Homocedasticidad: Test tipo ARCH multivariado
-arch.test(VARi, lags.multi = 60) #Rechazo, no se cumple el supuesto.
+arch.test(VARi, lags.multi = 60) 
 arch.test(VARi, lags.multi = 40) #Rechazo, no se cumple el supuesto
-ArchTest(resid(VARi), lags = 40)
+arch.test(VARi, lags.multi = 20) #Rechazo, no se cumple el supuesto
+
 ##Test Jarque-Bera multivariado
 normality.test(VARi) #Rechazo, no se cumple el supuesto. 
 eigen(VARi$A$A1)
-VAR2 <- VAR(i.Y, p= 7, type="none", season=NULL, exogen = d_exo)
-plot(stability(VAR2))
+VAR2 <- VAR(i.Y, p = 4, type="const", season=NULL)
+roots(VAR2)
 summary(VAR2)
+
 #Impulso respuesta
 grid.arrange(
         irf_ggplot(VARi, 'i_3m', 'i_3m'),
         irf_ggplot(VARi, 'i_3m', 'i_1y'), ncol=2
 )
 
+autoplot(predict(VARi, n.ahead = 5, ci = 0.95), facets=T)
+coef(VARi)
+
+decomp.3<-fevd(VARi, n.ahead = 20)
+var1y<-c(decomp.3$i_1y[1,],decomp.3$i_1y[2,],decomp.3$i_1y[3,],decomp.3$i_1y[4,],decomp.3$i_1y[5,],decomp.3$i_1y[6,]
+  ,decomp.3$i_1y[7,],decomp.3$i_1y[8,],decomp.3$i_1y[9,] ,decomp.3$i_1y[10,], decomp.3$i_1y[11,],decomp.3$i_1y[12,],decomp.3$i_1y[13,],decomp.3$i_1y[14,],decomp.3$i_1y[15,],decomp.3$i_1y[16,]
+  ,decomp.3$i_1y[17,],decomp.3$i_1y[18,],decomp.3$i_1y[19,] ,decomp.3$i_1y[20,])
+decomp.31<-data.frame(time=rep(1:20,each=2), Series=as.factor(rep(c('i_1y','i_3m'),each=1)), variable=var1y)
+
+var3m<-c(decomp.3$i_3m[1,],decomp.3$i_3m[2,],decomp.3$i_3m[3,],decomp.3$i_3m[4,],decomp.3$i_3m[5,],decomp.3$i_3m[6,]
+         ,decomp.3$i_3m[7,],decomp.3$i_3m[8,],decomp.3$i_3m[9,] ,decomp.3$i_3m[10,], decomp.3$i_3m[11,],decomp.3$i_3m[12,],decomp.3$i_3m[13,],decomp.3$i_3m[14,],decomp.3$i_3m[15,],decomp.3$i_3m[16,]
+         ,decomp.3$i_3m[17,],decomp.3$i_3m[18,],decomp.3$i_3m[19,] ,decomp.3$i_3m[20,])
+decomp.32<-data.frame(time=rep(1:20,each=2), Series=as.factor(rep(c('i_1y','i_3m'),each=1)), variable=var3m)
+
+grid.arrange(
+ggplot(data=decomp.31, aes(x=time, y=variable, fill=Series)) + 
+        geom_bar(position="stack", stat="identity") + ggtitle('Descomposición de varianza para i_1y') +
+        theme_minimal() + xlab('') + ylab('') + scale_fill_manual(values = c("#BF2828F1", "#193AA6EE")),
+ggplot(data=decomp.32, aes(x=time, y=variable, fill=Series)) + 
+        geom_bar(position="stack", stat="identity") + ggtitle('Descomposición de varianza para i_3m') +
+        theme_minimal() + xlab('') + ylab('') + scale_fill_manual(values = c("#BF2828F1", "#193AA6EE"))
+)
 
 ### 
 UK<-data.frame(UK_4 <- read_delim(file.choose(),";", escape_double = FALSE, trim_ws = TRUE))
