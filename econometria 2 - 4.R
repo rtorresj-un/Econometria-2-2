@@ -236,35 +236,47 @@ VARselect(GER, lag.max=20,type = "none", season = NULL) # estimar var 2 o 7
 VARselect(GER, lag.max=20,type = "const", season = NULL)# estimar var 3 o 2
 
 #VAR con sólo intercepto.
-VAR.1= VAR(GER, p=3, type="const", season=NULL) 
+VAR.const = VAR(GER, p=3, type="const", season=NULL)  
+summary(VAR.const)
+roots(VAR.const)
+Acoef(VAR.const)
+
+
+#VAR sin términos determinísticos.
+VAR.1= VAR(GER, p=3, type="none", season=NULL) 
 summary(VAR.1) #El intercepto es significativo en una ecuación.
 roots(VAR.1)
 Acoef(VAR.1)
-#VAR sin términos determinísticos.
-VAR.no.1 = VAR(GER, p=3, type="none", season=NULL)  
-summary(VAR.no.1)
-roots(VAR.no.1)
-Acoef(VAR.no.1)
+stargazer(VAR.1)
 
-P.75.1=serial.test(VAR.1, lags.pt = 50, type = "PT.asymptotic");P.75.1 #No rechazo, se cumple el supuesto
+P.75.1=serial.test(VAR.1, lags.pt = 75, type = "PT.asymptotic");P.75.1 #No rechazo, se cumple el supuesto
+P.50.1=serial.test(VAR.1, lags.pt = 50, type = "PT.asymptotic");P.50.1 #No rechazo, se cumple el supuesto
 P.30.1=serial.test(VAR.1, lags.pt = 30, type = "PT.asymptotic");P.30.1 #No rechazo, se cumple el supuesto
 P.20.1=serial.test(VAR.1, lags.pt = 20, type = "PT.asymptotic");P.20.1  #No rechazo, se cumple el supuesto
 
-plot(P.20.1, names = "Diff_ipc") #Relativamente Bien comportados, salvo por normalidad
+plot(P.30.1, names = "Diff_ipc") #Relativamente Bien comportados, salvo por normalidad
 plot(P.20.1, names = "Diff_DE") #Relativamente Bien comportados, salvo por normalidad.
 
 #Homocedasticidad: Test tipo ARCH multivariado
+arch.test(VAR.1, lags.multi = 75, multivariate.only = TRUE)
 arch.test(VAR.1, lags.multi = 50, multivariate.only = TRUE)
 arch.test(VAR.1, lags.multi = 24, multivariate.only = TRUE) #se cumple el supuesto.
 arch.test(VAR.1, lags.multi = 12, multivariate.only = TRUE) #se cumple el supuesto
 
 ##Test Jarque-Bera multivariado
 normality.test(VAR.1) #rechazo, no se cumple el supuesto. 
-autoplot(predict(VAR.1, n.ahead = 12)) 
+autoplot(predict(VAR.1, n.ahead = 5), colour= "midnight blue") 
+
+##Pronóstico 
+fore_1punto<-predict(VAR.1, n.ahead=5, ci=.95)
+
+fore_1punto
+Grafico_fore<-autoplot(fore_1punto, ylab='', xlab='')+
+  scale_x_continuous(limit = c(450, 520)) + theme_minimal() + scale_color_stata()
+print(Grafico_fore)
 
 grid.arrange(
-        irf_ggplot(VAR.1, 'Diff_DE', 'Diff_DE'),
-        irf_ggplot(VAR.1, 'Diff_DE', 'Diff_ipc'), ncol=2
+        irf_ggplot(VAR.1, 'Diff_DE', 'Diff_ipc')
 )
 
 causality(VAR.1, 'Diff_DE')
@@ -280,8 +292,7 @@ SVAR.1<-SVAR(VAR.1,Amat = A.mat,Bmat = NULL, estmethod = "scoring")
 summary(SVAR.1)
 
 grid.arrange(
-        irf_ggplot(SVAR.1, 'Diff_DE', 'Diff_DE'),
-        irf_ggplot(SVAR.1, 'Diff_DE', 'Diff_ipc'), ncol=2
+        irf_ggplot(VAR.1, 'Diff_DE', 'Diff_ipc')
 )
 
 
